@@ -1,28 +1,28 @@
 # implementation_plan
 
 ## goal
-- 현재 로컬 Git 저장소를 `https://github.com/gyeongmin100/subway` 원격과 연결한다.
-- 첫 커밋을 만들고 `main` 브랜치를 GitHub에 push 가능한 상태로 정리한다.
+- Cloudflare Workers가 배포할 수 있는 최소 실행 가능한 Worker 프로젝트를 저장소에 추가한다.
+- 현재 저장소 루트가 아닌 `workers/` 폴더를 배포 대상으로 쓸 수 있게 구조를 만든다.
 
 ## scope
-- 로컬 Git 상태 확인
-- 원격 `origin` 설정
-- 첫 커밋 생성
-- GitHub 원격 push 수행
-- 이번 범위는 Git 연결과 push까지만 포함
+- `workers/` 폴더 생성
+- Workers 설정 파일과 TypeScript 엔트리 파일 생성
+- 최소 실행 가능한 응답용 API 엔드포인트 추가
+- 로컬 검증에 필요한 `package.json`, `wrangler.jsonc`, `tsconfig.json` 추가
+- 이번 범위는 Worker 골격 생성과 배포 준비까지 포함
 
 ## work steps
-- [ ] 1. 현재 로컬 Git 상태와 원격 설정 여부를 확인한다.
-- [ ] 2. 원격 `origin`을 `https://github.com/gyeongmin100/subway`로 설정한다.
-- [ ] 3. 현재 작업 트리를 첫 커밋으로 기록한다.
-- [ ] 4. `main` 브랜치를 GitHub로 push한다.
-- [ ] 5. 원격 연결과 push 결과를 검증한다.
+- [ ] 1. `workers/` 폴더 구조와 최소 배포 파일 구성을 정의한다.
+- [ ] 2. `wrangler.jsonc`, `package.json`, `tsconfig.json`을 생성한다.
+- [ ] 3. `src/index.ts`에 최소 실행 가능한 Worker 핸들러를 구현한다.
+- [ ] 4. Cloudflare 배포 기준에 맞는 검증 명령과 배포 루트 기준을 정리한다.
+- [ ] 5. 생성한 파일들의 정합성을 검토하고 Git 반영 준비를 한다.
 
 ## verification criteria
-- `git remote -v`에 `origin`이 GitHub 저장소로 표시된다.
-- `git status --short --branch` 기준으로 현재 브랜치와 추적 상태가 정상이다.
-- GitHub 원격에 현재 `main` 브랜치가 올라간다.
+- `workers/wrangler.jsonc`에서 `main`이 Worker 엔트리 파일을 가리킨다.
+- `workers/src/index.ts`가 `wrangler deploy` 가능한 기본 `fetch` 핸들러를 제공한다.
+- Cloudflare에서 Root Directory를 `workers`로 지정하면 배포 가능한 구조다.
 
 ## completion condition
-- 이 로컬 폴더가 `https://github.com/gyeongmin100/subway`와 연결되어 있다.
-- 이후 Cloudflare Workers가 해당 저장소를 가져갈 수 있는 상태다.
+- 저장소 안에 Cloudflare Workers 프로젝트가 실제로 존재한다.
+- Cloudflare에서 더 이상 "배포할 프로젝트를 찾을 수 없음" 오류가 나지 않는 구조가 된다.

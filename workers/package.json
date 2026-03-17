@@ -1,0 +1,14 @@
+{
+  "name": "subway-workers",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "check": "wrangler check",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2",
+    "wrangler": "^4.74.0"
+  }
+}

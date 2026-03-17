@@ -1,0 +1,6 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "subway-workers",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-03-17"
+}
