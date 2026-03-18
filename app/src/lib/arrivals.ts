@@ -45,12 +45,18 @@ export function formatArrivalText(
   now: number,
 ): string {
   const seconds = getDisplaySeconds(train, fetchedAt, now);
+  const hasArrivalStatus =
+    train.arvlMsg2.includes("도착") || train.arvlMsg2.includes("진입");
 
-  if (seconds <= 0) {
+  if (hasArrivalStatus) {
     return train.arvlMsg2 || "도착 정보 없음";
   }
 
-  if (seconds <= 10) {
+  if (seconds <= 60) {
+    return "곧 도착";
+  }
+
+  if (seconds <= 0) {
     return "곧 도착";
   }
 

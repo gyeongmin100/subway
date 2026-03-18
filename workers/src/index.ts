@@ -121,28 +121,12 @@ function toSeoulIsoString(value: string): string | null {
   return `${value.replace(" ", "T")}${SEOUL_TIMEZONE_OFFSET}`;
 }
 
-function getAdjustedBarvlDt(rawBarvlDt: string, recptnDt: string): number {
+function getReportedBarvlDt(rawBarvlDt: string): number {
   const reportedSeconds = Number(rawBarvlDt);
   if (!Number.isFinite(reportedSeconds) || reportedSeconds <= 0) {
     return 0;
   }
-
-  const receiptIso = toSeoulIsoString(recptnDt);
-  if (!receiptIso) {
-    return reportedSeconds;
-  }
-
-  const receiptTime = Date.parse(receiptIso);
-  if (!Number.isFinite(receiptTime)) {
-    return reportedSeconds;
-  }
-
-  const elapsedSeconds = Math.floor((Date.now() - receiptTime) / 1000);
-  if (elapsedSeconds <= 0) {
-    return reportedSeconds;
-  }
-
-  return Math.max(0, reportedSeconds - elapsedSeconds);
+  return reportedSeconds;
 }
 
 function getLineNameFromSubwayId(subwayId: string): string {
@@ -172,7 +156,7 @@ function parseArrivalRows(payload: SeoulArrivalApiResponse): {
       updnLine: row.updnLine ?? "",
       trainLineNm: row.trainLineNm ?? "",
       btrainSttus: row.btrainSttus ?? "",
-      barvlDt: getAdjustedBarvlDt(rawBarvlDt, recptnDt),
+      barvlDt: getReportedBarvlDt(rawBarvlDt),
       rawBarvlDt: Number(rawBarvlDt) || 0,
       btrainNo: row.btrainNo ?? "",
       arvlMsg2: row.arvlMsg2 ?? "",
