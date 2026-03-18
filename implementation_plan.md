@@ -1,28 +1,33 @@
 # implementation_plan
 
 ## goal
-- Cloudflare Worker에서 서울시 지하철 실시간 도착정보 API를 호출하는 백엔드 로직을 구현한다.
-- 앱이 바로 쓸 수 있는 단순한 JSON 응답 형태로 도착정보를 가공한다.
+- 현재 `도착정보 API(barvlDt)` 중심 구조를 `도착정보 + 위치정보` 결합 구조로 확장한다.
+- 카카오맵처럼 같은 역의 여러 노선/방향을 더 자연스럽게 분리하고, 남은 시간을 덜 튀게 만든다.
+- Android 상단 패널과 앱이 동일한 열차 판별 기준을 쓰도록 정리한다.
+- 구현 후 기존 기억을 배제하고 문서와 동작만 기준으로 제로베이스 재검토한다.
 
 ## scope
-- `workers/src/index.ts`에 서울시 API 연동 로직 추가
-- Worker 환경변수로 서울시 API 키 사용
-- `/api/arrivals?station=...` 엔드포인트 구현
-- XML 응답에서 필요한 필드만 추출해 JSON으로 반환
-- 이번 범위는 도착정보 조회 1개 엔드포인트 구현까지 포함
+- 서울시 `realtimePosition` 위치정보 API를 Worker에 추가한다.
+- Worker에서 `realtimeStationArrival`과 `realtimePosition`을 결합할 수 있는 공통 식별 기준을 만든다.
+- 앱/Android 서비스가 새 Worker 응답 구조를 사용하도록 수정한다.
+- 시간 계산을 단순 `barvlDt` 카운트다운에서 `위치 상태 + 도착정보` 혼합 기준으로 보정한다.
 
 ## work steps
-- [ ] 1. 서울시 도착정보 API 요청 형식과 필요한 응답 필드를 확정한다.
-- [ ] 2. Worker 환경변수 이름과 오류 처리 규칙을 정의한다.
-- [ ] 3. `/api/arrivals?station=...` 엔드포인트를 구현한다.
-- [ ] 4. XML 응답을 파싱해 `barvlDt`, `arvlMsg2`, `trainLineNm` 등 필요한 값만 JSON으로 변환한다.
-- [ ] 5. 로컬 검증 기준과 Cloudflare 비밀값 설정 절차를 정리한다.
+- [x] 1. 현재 Worker/앱/Android 서비스의 시간 추정 흐름과 식별 키를 다시 정리한다.
+- [x] 2. 위치정보 API 필드 중 실제로 쓸 최소 필드(`trainNo`, `statnNm`, `statnTnm`, `updnLine`, `trainSttus`)를 확정한다.
+- [x] 3. Worker에 위치정보 결합 응답을 추가한다.
+- [x] 4. 도착정보와 위치정보를 묶는 기준을 `btrainNo <-> trainNo`로 정의한다.
+- [x] 5. 남은 시간 계산 규칙을 다시 정의한다.
+- [x] 6. Android 패널 서비스가 새 응답 기준으로 시간/상태를 표시하도록 수정한다.
+- [ ] 7. `보라매`, `강남`, `이문` 같은 다중 노선 역으로 실제 기기 재검증한다.
+- [x] 8. 코드 기준 제로베이스 재검토를 완료한다.
 
 ## verification criteria
-- `/api/arrivals?station=강남` 요청이 성공 시 JSON을 반환한다.
-- 응답에 최소한 `stationName`, `updatedAt`, `trains[].barvlDt`, `trains[].arvlMsg2`가 포함된다.
-- API 키가 없거나 외부 API 호출이 실패하면 명확한 오류 응답을 준다.
+- 같은 역 여러 노선에서 선택한 노선/방향 열차만 남아야 한다.
+- 새로고침 후 시간이 과도하게 거꾸로 튀는 현상이 줄어들어야 한다.
+- 즐겨찾기 전환 후 빈 패널이 줄어들거나 없어져야 한다.
+- Worker, 앱, Android 서비스가 같은 열차 판별 기준을 사용해야 한다.
 
 ## completion condition
-- Worker가 서울시 도착정보를 실제로 가져와 앱이 바로 쓸 수 있는 JSON으로 반환한다.
-- Cloudflare에 API 키만 넣으면 도착정보 조회 엔드포인트를 배포할 수 있다.
+- 위치정보를 결합한 새 응답 구조가 동작하고, 패널 시간/상태 표시가 현재보다 자연스러워야 한다.
+- 남은 일은 실제 기기 재검증과 그 결과 수정만 남아 있어야 한다.
