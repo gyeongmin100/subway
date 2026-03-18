@@ -23,43 +23,6 @@ type SeoulArrivalApiResponse = {
   }>;
 };
 
-type SeoulPositionApiResponse = {
-  errorMessage?: {
-    status?: number;
-    code?: string;
-    message?: string;
-    total?: number;
-  };
-  realtimePositionList?: Array<{
-    subwayId?: string;
-    subwayNm?: string;
-    statnId?: string;
-    statnNm?: string;
-    trainNo?: string;
-    lastRecptnDt?: string;
-    recptnDt?: string;
-    updnLine?: string;
-    statnTid?: string;
-    statnTnm?: string;
-    trainSttus?: string;
-    directAt?: string;
-    lstcarAt?: string;
-  }>;
-};
-
-type PositionTrain = {
-  subwayId: string;
-  subwayNm: string;
-  statnId: string;
-  statnNm: string;
-  trainNo: string;
-  recptnDt: string;
-  updnLine: string;
-  statnTid: string;
-  statnTnm: string;
-  trainSttus: string;
-};
-
 type ArrivalTrain = {
   subwayId: string;
   updnLine: string;
@@ -73,14 +36,11 @@ type ArrivalTrain = {
   ordkey: string;
   recptnDt: string;
   lineName: string;
-  position?: PositionTrain | null;
 };
 
-const SEOUL_TIMEZONE_OFFSET = "+09:00";
 const DEFAULT_START_INDEX = "1";
 const DEFAULT_END_INDEX = "30";
 const SEOUL_REALTIME_ARRIVAL_PATH = "realtimeStationArrival";
-const SEOUL_REALTIME_POSITION_PATH = "realtimePosition";
 
 const SUBWAY_ID_TO_LINE_NAME: Record<string, string> = {
   "1001": "1호선",
@@ -113,32 +73,12 @@ function json(data: unknown, init?: ResponseInit): Response {
   });
 }
 
-function toSeoulIsoString(value: string): string | null {
-  if (!value) {
-    return null;
-  }
-
-  return `${value.replace(" ", "T")}${SEOUL_TIMEZONE_OFFSET}`;
-}
-
-function getReportedBarvlDt(rawBarvlDt: string): number {
-  const reportedSeconds = Number(rawBarvlDt);
-  if (!Number.isFinite(reportedSeconds) || reportedSeconds <= 0) {
-    return 0;
-  }
-  return reportedSeconds;
-}
-
 function getLineNameFromSubwayId(subwayId: string): string {
   return SUBWAY_ID_TO_LINE_NAME[subwayId] ?? "";
 }
 
 function normalizeLineName(value: string): string {
   return value.trim().replace(/\s+/g, "");
-}
-
-function normalizeTrainNo(value: string): string {
-  return value.replace(/\D/g, "").replace(/^0+/, "");
 }
 
 function parseArrivalRows(payload: SeoulArrivalApiResponse): {
@@ -148,52 +88,23 @@ function parseArrivalRows(payload: SeoulArrivalApiResponse): {
   rows: ArrivalTrain[];
 } {
   const rows = (payload.realtimeArrivalList ?? []).map((row) => {
-    const rawBarvlDt = row.barvlDt ?? "";
-    const recptnDt = row.recptnDt ?? "";
+    const rawBarvlDt = Number(row.barvlDt ?? "");
 
     return {
       subwayId: row.subwayId ?? "",
       updnLine: row.updnLine ?? "",
       trainLineNm: row.trainLineNm ?? "",
       btrainSttus: row.btrainSttus ?? "",
-      barvlDt: getReportedBarvlDt(rawBarvlDt),
-      rawBarvlDt: Number(rawBarvlDt) || 0,
+      barvlDt: Number.isFinite(rawBarvlDt) && rawBarvlDt > 0 ? rawBarvlDt : 0,
+      rawBarvlDt: Number.isFinite(rawBarvlDt) && rawBarvlDt > 0 ? rawBarvlDt : 0,
       btrainNo: row.btrainNo ?? "",
       arvlMsg2: row.arvlMsg2 ?? "",
       arvlMsg3: row.arvlMsg3 ?? "",
       ordkey: row.ordkey ?? "",
-      recptnDt,
+      recptnDt: row.recptnDt ?? "",
       lineName: getLineNameFromSubwayId(row.subwayId ?? ""),
-      position: null,
     };
   });
-
-  return {
-    code: payload.errorMessage?.code ?? "",
-    message: payload.errorMessage?.message ?? "",
-    total: payload.errorMessage?.total ?? rows.length,
-    rows,
-  };
-}
-
-function parsePositionRows(payload: SeoulPositionApiResponse): {
-  code: string;
-  message: string;
-  total: number;
-  rows: PositionTrain[];
-} {
-  const rows = (payload.realtimePositionList ?? []).map((row) => ({
-    subwayId: row.subwayId ?? "",
-    subwayNm: row.subwayNm ?? "",
-    statnId: row.statnId ?? "",
-    statnNm: row.statnNm ?? "",
-    trainNo: row.trainNo ?? "",
-    recptnDt: row.recptnDt ?? "",
-    updnLine: row.updnLine ?? "",
-    statnTid: row.statnTid ?? "",
-    statnTnm: row.statnTnm ?? "",
-    trainSttus: row.trainSttus ?? "",
-  }));
 
   return {
     code: payload.errorMessage?.code ?? "",
@@ -209,47 +120,12 @@ function filterRowsByLine(rows: ArrivalTrain[], lineName?: string | null): Arriv
   }
 
   const normalizedLineName = normalizeLineName(lineName);
-  return rows.filter((row) => normalizeLineName(getLineNameFromSubwayId(row.subwayId)) === normalizedLineName);
-}
-
-function mergeArrivalAndPosition(
-  arrivals: ArrivalTrain[],
-  positions: PositionTrain[],
-): ArrivalTrain[] {
-  const latestPositionByTrainNo = new Map<string, PositionTrain>();
-
-  for (const position of positions) {
-    const key = normalizeTrainNo(position.trainNo);
-    if (!key) {
-      continue;
-    }
-
-    const previous = latestPositionByTrainNo.get(key);
-    const previousTime = previous ? Date.parse(toSeoulIsoString(previous.recptnDt) ?? "") : 0;
-    const currentTime = Date.parse(toSeoulIsoString(position.recptnDt) ?? "") || 0;
-
-    if (!previous || currentTime >= previousTime) {
-      latestPositionByTrainNo.set(key, position);
-    }
-  }
-
-  return arrivals.map((arrival) => {
-    const position = latestPositionByTrainNo.get(normalizeTrainNo(arrival.btrainNo));
-    return {
-      ...arrival,
-      position: position ?? null,
-    };
-  });
+  return rows.filter((row) => normalizeLineName(row.lineName) === normalizedLineName);
 }
 
 function buildSeoulArrivalUrl(apiKey: string, stationName: string): string {
   const encodedStationName = encodeURIComponent(stationName);
   return `http://swopenapi.seoul.go.kr/api/subway/${apiKey}/json/${SEOUL_REALTIME_ARRIVAL_PATH}/${DEFAULT_START_INDEX}/${DEFAULT_END_INDEX}/${encodedStationName}/`;
-}
-
-function buildSeoulPositionUrl(apiKey: string, lineName: string): string {
-  const encodedLineName = encodeURIComponent(lineName);
-  return `http://swopenapi.seoul.go.kr/api/subway/${apiKey}/json/${SEOUL_REALTIME_POSITION_PATH}/${DEFAULT_START_INDEX}/${DEFAULT_END_INDEX}/${encodedLineName}/`;
 }
 
 async function fetchStationArrivals(env: Env, stationName: string, lineName?: string | null): Promise<Response> {
@@ -300,31 +176,13 @@ async function fetchStationArrivals(env: Env, stationName: string, lineName?: st
   }
 
   const filteredRows = filterRowsByLine(parsed.rows, lineName);
-  let mergedRows = filteredRows;
-
-  if (lineName) {
-    const positionResponse = await fetch(buildSeoulPositionUrl(apiKey, lineName), {
-      headers: {
-        accept: "application/json",
-      },
-    } as RequestInit);
-
-    if (positionResponse.ok) {
-      const positionPayload = (await positionResponse.json()) as SeoulPositionApiResponse;
-      const parsedPositions = parsePositionRows(positionPayload);
-
-      if (!parsedPositions.code || parsedPositions.code === "INFO-000") {
-        mergedRows = mergeArrivalAndPosition(filteredRows, parsedPositions.rows);
-      }
-    }
-  }
 
   return json({
     stationName,
     lineName: lineName ?? null,
     updatedAt: new Date().toISOString(),
-    total: mergedRows.length,
-    trains: mergedRows,
+    total: filteredRows.length,
+    trains: filteredRows,
   });
 }
 
@@ -357,8 +215,7 @@ export default {
       try {
         return await fetchStationArrivals(env, stationName, lineName);
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unknown server error";
+        const message = error instanceof Error ? error.message : "Unknown server error";
 
         return json(
           {

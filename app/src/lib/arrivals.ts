@@ -56,10 +56,6 @@ export function formatArrivalText(
     return "곧 도착";
   }
 
-  if (seconds <= 0) {
-    return "곧 도착";
-  }
-
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
 

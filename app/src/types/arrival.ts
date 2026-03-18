@@ -11,18 +11,6 @@ export type ArrivalTrain = {
   ordkey: string;
   recptnDt: string;
   lineName: string;
-  position?: {
-    subwayId: string;
-    subwayNm: string;
-    statnId: string;
-    statnNm: string;
-    trainNo: string;
-    recptnDt: string;
-    updnLine: string;
-    statnTid: string;
-    statnTnm: string;
-    trainSttus: string;
-  } | null;
 };
 
 export type ArrivalsResponse = {
