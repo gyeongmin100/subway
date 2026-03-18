@@ -1,3 +1,5 @@
+import { getStationQueryCandidates } from "./stationNames";
+
 type Env = {
   SEOUL_SUBWAY_API_KEY?: string;
 };
@@ -140,49 +142,71 @@ async function fetchStationArrivals(env: Env, stationName: string, lineName?: st
     );
   }
 
-  const seoulApiUrl = buildSeoulArrivalUrl(apiKey, stationName);
-  const upstreamResponse = await fetch(seoulApiUrl, {
-    headers: {
-      accept: "application/json",
-    },
-  } as RequestInit);
+  let lastParsed: ReturnType<typeof parseArrivalRows> | null = null;
 
-  if (!upstreamResponse.ok) {
-    return json(
-      {
-        error: "Upstream request failed",
-        status: upstreamResponse.status,
-        stationName,
-        lineName: lineName ?? null,
+  for (const candidateStationName of getStationQueryCandidates(stationName)) {
+    const seoulApiUrl = buildSeoulArrivalUrl(apiKey, candidateStationName);
+    const upstreamResponse = await fetch(seoulApiUrl, {
+      headers: {
+        accept: "application/json",
       },
-      { status: 502 },
-    );
+    } as RequestInit);
+
+    if (!upstreamResponse.ok) {
+      return json(
+        {
+          error: "Upstream request failed",
+          status: upstreamResponse.status,
+          stationName,
+          apiStationName: candidateStationName,
+          lineName: lineName ?? null,
+        },
+        { status: 502 },
+      );
+    }
+
+    const payload = (await upstreamResponse.json()) as SeoulArrivalApiResponse;
+    const parsed = parseArrivalRows(payload);
+    lastParsed = parsed;
+
+    if (parsed.code && parsed.code !== "INFO-000") {
+      continue;
+    }
+
+    const filteredRows = filterRowsByLine(parsed.rows, lineName);
+    if (filteredRows.length === 0) {
+      continue;
+    }
+
+    return json({
+      stationName,
+      apiStationName: candidateStationName,
+      lineName: lineName ?? null,
+      updatedAt: new Date().toISOString(),
+      total: filteredRows.length,
+      trains: filteredRows,
+    });
   }
 
-  const payload = (await upstreamResponse.json()) as SeoulArrivalApiResponse;
-  const parsed = parseArrivalRows(payload);
-
-  if (parsed.code && parsed.code !== "INFO-000") {
+  if (lastParsed && lastParsed.code && lastParsed.code !== "INFO-000") {
     return json(
       {
         error: "Seoul API returned an error",
-        code: parsed.code,
-        message: parsed.message,
+        code: lastParsed.code,
+        message: lastParsed.message,
         stationName,
         lineName: lineName ?? null,
       },
       { status: 502 },
     );
   }
-
-  const filteredRows = filterRowsByLine(parsed.rows, lineName);
 
   return json({
     stationName,
     lineName: lineName ?? null,
     updatedAt: new Date().toISOString(),
-    total: filteredRows.length,
-    trains: filteredRows,
+    total: 0,
+    trains: [],
   });
 }
 

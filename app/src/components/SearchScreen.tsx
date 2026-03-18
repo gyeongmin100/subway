@@ -114,7 +114,7 @@ export function SearchScreen({
               }}
               style={styles.resultCard}
             >
-              <Text style={styles.stationName}>{`${result.stationName}역`}</Text>
+              <Text style={styles.stationName}>{result.stationName}</Text>
               <View style={styles.badgeRow}>
                 <Chip label={result.lineName} />
                 <Chip label={result.directionLabel} />

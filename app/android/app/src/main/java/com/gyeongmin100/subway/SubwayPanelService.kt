@@ -188,11 +188,11 @@ class SubwayPanelService : Service() {
     val requestFavoriteId = favorite.id
     executor.execute {
       try {
-        var arrivals = requestArrivals(favorite.stationName, favorite.lineName)
+        var arrivals = requestArrivals(favorite.apiStationName, favorite.lineName)
           .filter { matchesFavorite(it, favorite) }
 
         if (arrivals.isEmpty()) {
-          arrivals = requestArrivals(favorite.stationName, null)
+          arrivals = requestArrivals(favorite.apiStationName, null)
             .filter { matchesFavorite(it, favorite) }
         }
 
@@ -316,7 +316,7 @@ class SubwayPanelService : Service() {
     val title = if (favorite == null) {
       "즐겨찾기 없음"
     } else {
-      "${favorite.stationName}역 · ${favorite.lineName} · ${favorite.directionLabel}"
+      "${favorite.stationName} · ${favorite.lineName} · ${favorite.directionLabel}"
     }
 
     val lines = if (favorite == null) {

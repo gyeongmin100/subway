@@ -15,6 +15,7 @@ export type ArrivalTrain = {
 
 export type ArrivalsResponse = {
   stationName: string;
+  apiStationName?: string | null;
   lineName?: string | null;
   updatedAt: string;
   total: number;

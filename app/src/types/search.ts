@@ -13,6 +13,7 @@ export type StationMasterRow = {
 export type SearchResult = {
   key: string;
   stationName: string;
+  apiStationName: string;
   lineName: string;
   operatorName: string;
   stationCode: string;
