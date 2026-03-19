@@ -294,10 +294,10 @@
         "stationCode":  "1015",
         "externalCode":  "123",
         "previousStation":  "외대앞",
-        "nextStation":  "청량리(서울시립대입구)"
+        "nextStation":  "청량리"
     },
     {
-        "stationName":  "청량리(서울시립대입구)",
+        "stationName":  "청량리",
         "lineName":  "1호선",
         "normalizedLineName":  "1호선",
         "operatorName":  "서울교통공사",
@@ -315,7 +315,7 @@
         "order":  29,
         "stationCode":  "0157",
         "externalCode":  "125",
-        "previousStation":  "청량리(서울시립대입구)",
+        "previousStation":  "청량리",
         "nextStation":  "신설동"
     },
     {
@@ -2296,10 +2296,10 @@
         "stationCode":  "0417",
         "externalCode":  "417",
         "previousStation":  "미아사거리",
-        "nextStation":  "성신여대입구(돈암)"
+        "nextStation":  "성신여대입구"
     },
     {
-        "stationName":  "성신여대입구(돈암)",
+        "stationName":  "성신여대입구",
         "lineName":  "4호선",
         "normalizedLineName":  "4호선",
         "operatorName":  "서울교통공사",
@@ -2317,7 +2317,7 @@
         "order":  14,
         "stationCode":  "",
         "externalCode":  "",
-        "previousStation":  "성신여대입구(돈암)",
+        "previousStation":  "성신여대입구",
         "nextStation":  "혜화"
     },
     {
@@ -2428,10 +2428,10 @@
         "stationCode":  "0429",
         "externalCode":  "429",
         "previousStation":  "삼각지",
-        "nextStation":  "이촌(국립중앙박물관)"
+        "nextStation":  "이촌"
     },
     {
-        "stationName":  "이촌(국립중앙박물관)",
+        "stationName":  "이촌",
         "lineName":  "4호선",
         "normalizedLineName":  "4호선",
         "operatorName":  "서울교통공사",
@@ -2449,7 +2449,7 @@
         "order":  26,
         "stationCode":  "",
         "externalCode":  "",
-        "previousStation":  "이촌(국립중앙박물관)",
+        "previousStation":  "이촌",
         "nextStation":  "총신대입구(이수)"
     },
     {
@@ -2989,10 +2989,10 @@
         "stationCode":  "",
         "externalCode":  "",
         "previousStation":  "서대문",
-        "nextStation":  "종로3가(탑골공원)"
+        "nextStation":  "종로3가"
     },
     {
-        "stationName":  "종로3가(탑골공원)",
+        "stationName":  "종로3가",
         "lineName":  "5호선",
         "normalizedLineName":  "5호선",
         "operatorName":  "서울교통공사",
@@ -3010,7 +3010,7 @@
         "order":  26,
         "stationCode":  "2536",
         "externalCode":  "535",
-        "previousStation":  "종로3가(탑골공원)",
+        "previousStation":  "종로3가",
         "nextStation":  "동대문역사문화공원"
     },
     {
@@ -3891,10 +3891,10 @@
         "stationCode":  "2721",
         "externalCode":  "719",
         "previousStation":  "먹골",
-        "nextStation":  "상봉(시외버스터미널)"
+        "nextStation":  "상봉"
     },
     {
-        "stationName":  "상봉(시외버스터미널)",
+        "stationName":  "상봉",
         "lineName":  "7호선",
         "normalizedLineName":  "7호선",
         "operatorName":  "서울교통공사",
@@ -3912,7 +3912,7 @@
         "order":  13,
         "stationCode":  "2723",
         "externalCode":  "721",
-        "previousStation":  "상봉(시외버스터미널)",
+        "previousStation":  "상봉",
         "nextStation":  "사가정"
     },
     {
@@ -4221,10 +4221,10 @@
         "stationCode":  "2751",
         "externalCode":  "749",
         "previousStation":  "광명사거리",
-        "nextStation":  "온수(성공회대입구)"
+        "nextStation":  "온수"
     },
     {
-        "stationName":  "온수(성공회대입구)",
+        "stationName":  "온수",
         "lineName":  "7호선",
         "normalizedLineName":  "7호선",
         "operatorName":  "서울교통공사",
@@ -4242,7 +4242,7 @@
         "order":  43,
         "stationCode":  "3753",
         "externalCode":  "751",
-        "previousStation":  "온수(성공회대입구)",
+        "previousStation":  "온수",
         "nextStation":  "부천종합운동장"
     },
     {
@@ -4342,10 +4342,10 @@
         "stationCode":  "3762",
         "externalCode":  "760",
         "previousStation":  "부평구청",
-        "nextStation":  "석남(거북시장)"
+        "nextStation":  "석남"
     },
     {
-        "stationName":  "석남(거북시장)",
+        "stationName":  "석남",
         "lineName":  "7호선",
         "normalizedLineName":  "7호선",
         "operatorName":  "인천교통공사",
@@ -5992,10 +5992,10 @@
         "stationCode":  "",
         "externalCode":  "",
         "previousStation":  "신내",
-        "nextStation":  "별내(삼육대학교)"
+        "nextStation":  "별내"
     },
     {
-        "stationName":  "별내(삼육대학교)",
+        "stationName":  "별내",
         "lineName":  "경춘",
         "normalizedLineName":  "경춘",
         "operatorName":  "코레일",
@@ -6013,7 +6013,7 @@
         "order":  9,
         "stationCode":  "",
         "externalCode":  "",
-        "previousStation":  "별내(삼육대학교)",
+        "previousStation":  "별내",
         "nextStation":  "사릉"
     },
     {
@@ -6806,10 +6806,10 @@
         "stationCode":  "",
         "externalCode":  "",
         "previousStation":  "대모산입구",
-        "nextStation":  "복정(동서울대학)"
+        "nextStation":  "복정"
     },
     {
-        "stationName":  "복정(동서울대학)",
+        "stationName":  "복정",
         "lineName":  "수인분당",
         "normalizedLineName":  "수인분당",
         "operatorName":  "코레일",
@@ -6827,7 +6827,7 @@
         "order":  15,
         "stationCode":  "",
         "externalCode":  "",
-        "previousStation":  "복정(동서울대학)",
+        "previousStation":  "복정",
         "nextStation":  "태평"
     },
     {
@@ -6861,10 +6861,10 @@
         "stationCode":  "",
         "externalCode":  "",
         "previousStation":  "모란",
-        "nextStation":  "이매(성남아트센터)"
+        "nextStation":  "이매"
     },
     {
-        "stationName":  "이매(성남아트센터)",
+        "stationName":  "이매",
         "lineName":  "수인분당",
         "normalizedLineName":  "수인분당",
         "operatorName":  "코레일",
@@ -6882,7 +6882,7 @@
         "order":  20,
         "stationCode":  "",
         "externalCode":  "",
-        "previousStation":  "이매(성남아트센터)",
+        "previousStation":  "이매",
         "nextStation":  "수내(한국잡월드)"
     },
     {

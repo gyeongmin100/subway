@@ -615,13 +615,13 @@
         "externalCode":  "",
         "branchKey":  "5호선-하남연장",
         "destinationName":  "방화행",
-        "displayLabel":  "하남검단산역역 5호선 방화행",
+        "displayLabel":  "하남검단산역 5호선 방화행",
         "previousStation":  "하남시청(덕풍.신장)",
         "nextStation":  "",
         "priority":  "1",
         "isActive":  "true",
         "note":  "하남 연장 말단",
-        "searchTokens":  "5호선|5호선역|방화|방화행|방화행역|하남검단산|하남검단산역|하남검단산역역 5호선 방화|하남검단산역역 5호선 방화행|하남검단산역역 5호선 방화행역"
+        "searchTokens":  "5호선|5호선역|방화|방화행|방화행역|하남검단산|하남검단산역|하남검단산역 5호선 방화|하남검단산역 5호선 방화행|하남검단산역 5호선 방화행역"
     },
     {
         "stationName":  "하남시청(덕풍.신장)",
@@ -983,13 +983,13 @@
         "externalCode":  "",
         "branchKey":  "경의중앙-서울지선",
         "destinationName":  "가좌행",
-        "displayLabel":  "서울역역 경의중앙선 가좌행",
+        "displayLabel":  "서울역 경의중앙선 가좌행",
         "previousStation":  "디지털미디어시티",
         "nextStation":  "가좌",
         "priority":  "1",
         "isActive":  "true",
         "note":  "서울역 지선 말단",
-        "searchTokens":  "가좌|가좌행|가좌행역|경의중앙선|경의중앙선역|서울|서울역|서울역역 경의중앙선 가좌|서울역역 경의중앙선 가좌행|서울역역 경의중앙선 가좌행역"
+        "searchTokens":  "가좌|가좌행|가좌행역|경의중앙선|경의중앙선역|서울|서울역|서울역 경의중앙선 가좌|서울역 경의중앙선 가좌행|서울역 경의중앙선 가좌행역"
     },
     {
         "stationName":  "용산",
@@ -1079,13 +1079,13 @@
         "externalCode":  "",
         "branchKey":  "공항-본선",
         "destinationName":  "인천공항2터미널행",
-        "displayLabel":  "서울역역 공항철도 인천공항2터미널행",
+        "displayLabel":  "서울역 공항철도 인천공항2터미널행",
         "previousStation":  "",
         "nextStation":  "공덕",
         "priority":  "1",
         "isActive":  "true",
         "note":  "단순 본선",
-        "searchTokens":  "공항철도|공항철도역|서울|서울역|서울역역 공항철도 인천공항2터미널|서울역역 공항철도 인천공항2터미널행|서울역역 공항철도 인천공항2터미널행역|인천공항2터미널|인천공항2터미널행|인천공항2터미널행역"
+        "searchTokens":  "공항철도|공항철도역|서울|서울역|서울역 공항철도 인천공항2터미널|서울역 공항철도 인천공항2터미널행|서울역 공항철도 인천공항2터미널행역|인천공항2터미널|인천공항2터미널행|인천공항2터미널행역"
     },
     {
         "stationName":  "인천공항2터미널",

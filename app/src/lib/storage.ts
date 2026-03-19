@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { loadNativePanelSnapshot } from "./nativePanel";
-import { normalizeFavorite } from "./search";
+import { isRealtimeSupportedLine, normalizeFavorite } from "./search";
 import type { Favorite } from "../types/favorite";
 
 const FAVORITES_KEY = "subway.favorite_list";
@@ -10,7 +10,9 @@ const CURRENT_FAVORITE_ID_KEY = "subway.current_favorite_id";
 export async function loadFavorites(): Promise<Favorite[]> {
   const nativeSnapshot = await loadNativePanelSnapshot();
   if (nativeSnapshot?.favorites?.length) {
-    return nativeSnapshot.favorites.map(normalizeFavorite);
+    return nativeSnapshot.favorites
+      .map(normalizeFavorite)
+      .filter((favorite) => isRealtimeSupportedLine(favorite.lineName));
   }
 
   const raw = await AsyncStorage.getItem(FAVORITES_KEY);
@@ -18,7 +20,9 @@ export async function loadFavorites(): Promise<Favorite[]> {
     return [];
   }
 
-  return (JSON.parse(raw) as Favorite[]).map(normalizeFavorite);
+  return (JSON.parse(raw) as Favorite[])
+    .map(normalizeFavorite)
+    .filter((favorite) => isRealtimeSupportedLine(favorite.lineName));
 }
 
 export async function saveFavorites(favorites: Favorite[]): Promise<void> {

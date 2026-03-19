@@ -55,14 +55,27 @@ const SUBWAY_ID_TO_LINE_NAME: Record<string, string> = {
   "1008": "8호선",
   "1009": "9호선",
   "1032": "GTX-A",
-  "1063": "경의중앙",
-  "1065": "공항",
-  "1067": "경춘",
-  "1075": "수인분당",
-  "1077": "신분당",
-  "1092": "우이신설",
+  "1081": "경강선",
+  "1063": "경의중앙선",
+  "1065": "공항철도",
+  "1067": "경춘선",
+  "1075": "수인분당선",
+  "1077": "신분당선",
+  "1092": "우이신설선",
   "1093": "서해선",
   "1094": "신림선",
+};
+
+const LINE_NAME_ALIASES: Record<string, string> = {
+  "경강": "경강선",
+  "경의중앙": "경의중앙선",
+  "공항": "공항철도",
+  "경춘": "경춘선",
+  "수인분당": "수인분당선",
+  "신분당": "신분당선",
+  "우이신설": "우이신설선",
+  "서해": "서해선",
+  "신림": "신림선",
 };
 
 function json(data: unknown, init?: ResponseInit): Response {
@@ -80,7 +93,8 @@ function getLineNameFromSubwayId(subwayId: string): string {
 }
 
 function normalizeLineName(value: string): string {
-  return value.trim().replace(/\s+/g, "");
+  const compact = value.trim().replace(/\s+/g, "");
+  return LINE_NAME_ALIASES[compact] ?? compact;
 }
 
 function parseArrivalRows(payload: SeoulArrivalApiResponse): {
