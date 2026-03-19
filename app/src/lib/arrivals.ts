@@ -48,7 +48,8 @@ export function normalizeDirectionLabel(updnLine: string): string {
 }
 
 export function getDisplaySeconds(train: ArrivalTrain, fetchedAt: number, now: number): number {
-  const elapsed = Math.max(0, Math.floor((now - fetchedAt) / 1000));
+  const observedAtMs = train.apiObservedAtMs > 0 ? train.apiObservedAtMs : fetchedAt;
+  const elapsed = Math.max(0, Math.floor((now - observedAtMs) / 1000));
   return Math.max(0, train.barvlDt - elapsed);
 }
 

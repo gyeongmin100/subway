@@ -10,6 +10,7 @@ export type ArrivalTrain = {
   arvlMsg3: string;
   ordkey: string;
   recptnDt: string;
+  apiObservedAtMs: number;
   lineName: string;
 };
 
@@ -17,6 +18,7 @@ export type ArrivalsResponse = {
   stationName: string;
   apiStationName?: string | null;
   lineName?: string | null;
+  apiObservedAtMs?: number | null;
   updatedAt: string;
   total: number;
   trains: ArrivalTrain[];

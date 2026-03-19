@@ -28,6 +28,7 @@ data class ArrivalItem(
   val trainLineNm: String,
   val barvlDt: Int,
   val rawBarvlDt: Int,
+  val apiObservedAtMs: Long,
   val btrainNo: String,
   val arvlMsg2: String,
   val lineName: String
@@ -45,7 +46,6 @@ class SubwayPanelService : Service() {
   private var currentFavorite: FavoriteItem? = null
   private var currentArrivals: List<ArrivalItem> = emptyList()
   private var currentPrimaryTrainNo: String? = null
-  private var lastFetchedAtMs: Long = 0L
 
   private val ticker = object : Runnable {
     override fun run() {
@@ -167,7 +167,6 @@ class SubwayPanelService : Service() {
     SubwayPanelStore.saveCurrentFavoriteId(this, currentFavorite?.id)
     currentArrivals = emptyList()
     currentPrimaryTrainNo = null
-    lastFetchedAtMs = 0L
   }
 
   private fun fetchLatestArrivals(force: Boolean = false) {
@@ -201,7 +200,6 @@ class SubwayPanelService : Service() {
             val now = System.currentTimeMillis()
             currentArrivals = reconcileArrivals(arrivals, now)
             currentPrimaryTrainNo = currentArrivals.firstOrNull()?.btrainNo
-            lastFetchedAtMs = now
             renderNotification()
           }
         }
@@ -225,26 +223,19 @@ class SubwayPanelService : Service() {
     val previousByTrainNo = currentArrivals
       .filter { it.btrainNo.isNotBlank() }
       .associateBy { it.btrainNo }
-    val elapsedSeconds = if (lastFetchedAtMs <= 0L) {
-      0
-    } else {
-      floor((nowMs - lastFetchedAtMs).toDouble() / 1000.0).toInt().coerceAtLeast(0)
-    }
 
     val reconciled = newArrivals.map { incoming ->
-      if (shouldUseArrivalMessage(incoming.barvlDt, incoming.arvlMsg2)) {
-        return@map incoming.copy(barvlDt = 0)
-      }
-
       val previous = previousByTrainNo[incoming.btrainNo]
       if (previous == null) {
         return@map incoming
       }
 
-      val predictedSeconds = (previous.barvlDt - elapsedSeconds).coerceAtLeast(0)
-      val hasSameRawEta = previous.rawBarvlDt == incoming.rawBarvlDt
-      if (hasSameRawEta) {
-        return@map incoming.copy(barvlDt = predictedSeconds)
+      val hasSameSnapshot =
+        previous.rawBarvlDt == incoming.rawBarvlDt &&
+          previous.apiObservedAtMs == incoming.apiObservedAtMs
+
+      if (hasSameSnapshot) {
+        return@map previous
       }
 
       incoming
@@ -256,7 +247,7 @@ class SubwayPanelService : Service() {
           currentPrimaryTrainNo != null && item.btrainNo == currentPrimaryTrainNo -> 0
           else -> 1
         }
-      }.thenBy { it.barvlDt }.thenBy { it.ordKeyValue() },
+      }.thenBy { getDisplaySeconds(it, nowMs) }.thenBy { it.ordKeyValue() },
     )
 
     return sorted
@@ -286,6 +277,7 @@ class SubwayPanelService : Service() {
       val body = BufferedReader(InputStreamReader(inputStream)).use { it.readText() }
       val root = JSONObject(body)
       val trains = root.optJSONArray("trains") ?: return@useConnection emptyList()
+      val receivedAtMs = System.currentTimeMillis()
 
       buildList {
         for (index in 0 until trains.length()) {
@@ -297,6 +289,7 @@ class SubwayPanelService : Service() {
               trainLineNm = item.optString("trainLineNm"),
               barvlDt = item.optInt("barvlDt", 0),
               rawBarvlDt = item.optInt("rawBarvlDt", 0),
+              apiObservedAtMs = item.optLong("apiObservedAtMs", receivedAtMs),
               btrainNo = item.optString("btrainNo"),
               arvlMsg2 = item.optString("arvlMsg2"),
               lineName = item.optString("lineName"),
@@ -393,13 +386,7 @@ class SubwayPanelService : Service() {
   }
 
   private fun formatArrival(arrival: ArrivalItem): String {
-    val elapsedSeconds = if (lastFetchedAtMs <= 0L) {
-      0
-    } else {
-      floor((System.currentTimeMillis() - lastFetchedAtMs).toDouble() / 1000.0).toInt()
-    }
-
-    val displaySeconds = (arrival.barvlDt - elapsedSeconds).coerceAtLeast(0)
+    val displaySeconds = getDisplaySeconds(arrival, System.currentTimeMillis())
     if (shouldUseArrivalMessage(displaySeconds, arrival.arvlMsg2)) {
       return arrival.arvlMsg2.ifBlank { "도착 정보 없음" }
     }
@@ -411,6 +398,16 @@ class SubwayPanelService : Service() {
 
   private fun shouldUseArrivalMessage(barvlDt: Int, message: String): Boolean =
     barvlDt <= 60
+
+  private fun getDisplaySeconds(arrival: ArrivalItem, nowMs: Long): Int {
+    val referenceTimeMs = if (arrival.apiObservedAtMs > 0L) {
+      arrival.apiObservedAtMs
+    } else {
+      nowMs
+    }
+    val elapsedSeconds = floor((nowMs - referenceTimeMs).toDouble() / 1000.0).toInt().coerceAtLeast(0)
+    return (arrival.barvlDt - elapsedSeconds).coerceAtLeast(0)
+  }
 
   private fun normalizeDirectionLabel(updnLine: String): String =
     when (updnLine) {

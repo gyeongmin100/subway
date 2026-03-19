@@ -37,6 +37,7 @@ type ArrivalTrain = {
   arvlMsg3: string;
   ordkey: string;
   recptnDt: string;
+  apiObservedAtMs: number;
   lineName: string;
 };
 
@@ -97,6 +98,26 @@ function normalizeLineName(value: string): string {
   return LINE_NAME_ALIASES[compact] ?? compact;
 }
 
+function parseSeoulDateTimeToMs(value: string): number {
+  const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/,
+  );
+
+  if (!match) {
+    return 0;
+  }
+
+  const [, year, month, day, hour, minute, second] = match;
+  return Date.UTC(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour) - 9,
+    Number(minute),
+    Number(second),
+  );
+}
+
 function parseArrivalRows(payload: SeoulArrivalApiResponse): {
   code: string;
   message: string;
@@ -118,6 +139,7 @@ function parseArrivalRows(payload: SeoulArrivalApiResponse): {
       arvlMsg3: row.arvlMsg3 ?? "",
       ordkey: row.ordkey ?? "",
       recptnDt: row.recptnDt ?? "",
+      apiObservedAtMs: parseSeoulDateTimeToMs(row.recptnDt ?? ""),
       lineName: getLineNameFromSubwayId(row.subwayId ?? ""),
     };
   });
@@ -192,10 +214,16 @@ async function fetchStationArrivals(env: Env, stationName: string, lineName?: st
       continue;
     }
 
+    const apiObservedAtMs = filteredRows.reduce(
+      (latest, row) => Math.max(latest, row.apiObservedAtMs),
+      0,
+    );
+
     return json({
       stationName,
       apiStationName: candidateStationName,
       lineName: lineName ?? null,
+      apiObservedAtMs,
       updatedAt: new Date().toISOString(),
       total: filteredRows.length,
       trains: filteredRows,
@@ -218,6 +246,7 @@ async function fetchStationArrivals(env: Env, stationName: string, lineName?: st
   return json({
     stationName,
     lineName: lineName ?? null,
+    apiObservedAtMs: 0,
     updatedAt: new Date().toISOString(),
     total: 0,
     trains: [],
