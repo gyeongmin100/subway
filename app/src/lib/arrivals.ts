@@ -52,21 +52,25 @@ export function getDisplaySeconds(train: ArrivalTrain, fetchedAt: number, now: n
   return Math.max(0, train.barvlDt - elapsed);
 }
 
+function hasSpecialArrivalMessage(message: string): boolean {
+  return (
+    message.includes("도착") ||
+    message.includes("진입") ||
+    message.includes("전역")
+  );
+}
+
 export function formatArrivalText(
   train: ArrivalTrain,
   fetchedAt: number,
   now: number,
 ): string {
   const seconds = getDisplaySeconds(train, fetchedAt, now);
-  const hasArrivalStatus =
-    train.arvlMsg2.includes("도착") || train.arvlMsg2.includes("진입");
+  const shouldUseArrivalMessage =
+    seconds <= 60 && hasSpecialArrivalMessage(train.arvlMsg2);
 
-  if (hasArrivalStatus) {
+  if (shouldUseArrivalMessage) {
     return train.arvlMsg2 || "도착 정보 없음";
-  }
-
-  if (seconds <= 60) {
-    return "곧 도착";
   }
 
   const minutes = Math.floor(seconds / 60);

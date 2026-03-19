@@ -232,10 +232,7 @@ class SubwayPanelService : Service() {
     }
 
     val reconciled = newArrivals.map { incoming ->
-      val hasArrivalStatus =
-        incoming.arvlMsg2.contains("도착") || incoming.arvlMsg2.contains("진입")
-
-      if (hasArrivalStatus) {
+      if (shouldUseArrivalMessage(incoming.barvlDt, incoming.arvlMsg2)) {
         return@map incoming.copy(barvlDt = 0)
       }
 
@@ -245,8 +242,12 @@ class SubwayPanelService : Service() {
       }
 
       val predictedSeconds = (previous.barvlDt - elapsedSeconds).coerceAtLeast(0)
-      val stabilizedSeconds = minOf(incoming.barvlDt, predictedSeconds)
-      incoming.copy(barvlDt = stabilizedSeconds)
+      val hasSameRawEta = previous.rawBarvlDt == incoming.rawBarvlDt
+      if (hasSameRawEta) {
+        return@map incoming.copy(barvlDt = predictedSeconds)
+      }
+
+      incoming
     }
 
     val sorted = reconciled.sortedWith(
@@ -392,12 +393,6 @@ class SubwayPanelService : Service() {
   }
 
   private fun formatArrival(arrival: ArrivalItem): String {
-    val hasArrivalStatus =
-      arrival.arvlMsg2.contains("도착") || arrival.arvlMsg2.contains("진입")
-    if (hasArrivalStatus) {
-      return arrival.arvlMsg2.ifBlank { "도착 정보 없음" }
-    }
-
     val elapsedSeconds = if (lastFetchedAtMs <= 0L) {
       0
     } else {
@@ -405,14 +400,20 @@ class SubwayPanelService : Service() {
     }
 
     val displaySeconds = (arrival.barvlDt - elapsedSeconds).coerceAtLeast(0)
-    if (displaySeconds <= 60) {
-      return "곧 도착"
+    if (shouldUseArrivalMessage(displaySeconds, arrival.arvlMsg2)) {
+      return arrival.arvlMsg2.ifBlank { "도착 정보 없음" }
     }
 
     val minutes = displaySeconds / 60
     val seconds = displaySeconds % 60
     return "${minutes}분 ${seconds}초"
   }
+
+  private fun hasSpecialArrivalMessage(message: String): Boolean =
+    message.contains("도착") || message.contains("진입") || message.contains("전역")
+
+  private fun shouldUseArrivalMessage(barvlDt: Int, message: String): Boolean =
+    barvlDt <= 60 && hasSpecialArrivalMessage(message)
 
   private fun normalizeDirectionLabel(updnLine: String): String =
     when (updnLine) {
