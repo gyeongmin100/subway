@@ -409,11 +409,8 @@ class SubwayPanelService : Service() {
     return "${minutes}분 ${seconds}초"
   }
 
-  private fun hasSpecialArrivalMessage(message: String): Boolean =
-    message.contains("도착") || message.contains("진입") || message.contains("전역")
-
   private fun shouldUseArrivalMessage(barvlDt: Int, message: String): Boolean =
-    barvlDt <= 60 && hasSpecialArrivalMessage(message)
+    barvlDt <= 60
 
   private fun normalizeDirectionLabel(updnLine: String): String =
     when (updnLine) {
