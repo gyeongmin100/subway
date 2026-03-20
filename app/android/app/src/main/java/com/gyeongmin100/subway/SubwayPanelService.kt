@@ -45,7 +45,6 @@ class SubwayPanelService : Service() {
   private var favorites: List<FavoriteItem> = emptyList()
   private var currentFavorite: FavoriteItem? = null
   private var currentArrivals: List<ArrivalItem> = emptyList()
-  private var currentPrimaryTrainNo: String? = null
 
   private val ticker = object : Runnable {
     override fun run() {
@@ -166,7 +165,6 @@ class SubwayPanelService : Service() {
     currentFavorite = favorites[nextIndex]
     SubwayPanelStore.saveCurrentFavoriteId(this, currentFavorite?.id)
     currentArrivals = emptyList()
-    currentPrimaryTrainNo = null
   }
 
   private fun fetchLatestArrivals(force: Boolean = false) {
@@ -199,7 +197,6 @@ class SubwayPanelService : Service() {
           if (currentFavorite?.id == requestFavoriteId) {
             val now = System.currentTimeMillis()
             currentArrivals = reconcileArrivals(arrivals, now)
-            currentPrimaryTrainNo = currentArrivals.firstOrNull()?.btrainNo
             renderNotification()
           }
         }
@@ -242,12 +239,8 @@ class SubwayPanelService : Service() {
     }
 
     val sorted = reconciled.sortedWith(
-      compareBy<ArrivalItem> { item ->
-        when {
-          currentPrimaryTrainNo != null && item.btrainNo == currentPrimaryTrainNo -> 0
-          else -> 1
-        }
-      }.thenBy { getDisplaySeconds(it, nowMs) }.thenBy { it.ordKeyValue() },
+      compareBy<ArrivalItem> { getDisplaySeconds(it, nowMs) }
+        .thenBy { it.ordKeyValue() },
     )
 
     return sorted
