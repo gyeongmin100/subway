@@ -227,9 +227,9 @@ class SubwayPanelService : Service() {
         return@map incoming
       }
 
-      val hasSameSnapshot =
-        previous.rawBarvlDt == incoming.rawBarvlDt &&
-          previous.apiObservedAtMs == incoming.apiObservedAtMs
+      val previousDisplaySeconds = getDisplaySeconds(previous, nowMs)
+      val incomingDisplaySeconds = getDisplaySeconds(incoming, nowMs)
+      val hasSameSnapshot = kotlin.math.abs(previousDisplaySeconds - incomingDisplaySeconds) <= 1
 
       if (hasSameSnapshot) {
         return@map previous
@@ -429,7 +429,7 @@ class SubwayPanelService : Service() {
 
     private const val CHANNEL_ID = "subway_panel_channel"
     private const val NOTIFICATION_ID = 41001
-    private const val REFRESH_INTERVAL_MS = 10_000L
+    private const val REFRESH_INTERVAL_MS = 5_000L
     private const val WORKER_BASE_URL = "https://subway.im100km.workers.dev"
 
     private const val REQUEST_PREVIOUS = 101
