@@ -47,6 +47,7 @@ class SubwayPanelService : Service() {
   private var favorites: List<FavoriteItem> = emptyList()
   private var currentFavorite: FavoriteItem? = null
   private var currentArrivals: List<ArrivalItem> = emptyList()
+  private val arrivalsByFavoriteId = mutableMapOf<String, List<ArrivalItem>>()
 
   private val ticker = object : Runnable {
     override fun run() {
@@ -144,9 +145,16 @@ class SubwayPanelService : Service() {
   private fun restoreState() {
     favorites = SubwayPanelStore.getFavorites(this)
     val currentFavoriteId = SubwayPanelStore.getCurrentFavoriteId(this)
+    val validFavoriteIds = favorites.map { it.id }.toSet()
+    arrivalsByFavoriteId.keys.retainAll(validFavoriteIds)
 
     currentFavorite = favorites.firstOrNull { it.id == currentFavoriteId }
       ?: favorites.firstOrNull()
+
+    currentArrivals = currentFavorite
+      ?.id
+      ?.let { arrivalsByFavoriteId[it].orEmpty() }
+      ?: emptyList()
 
     if (currentFavorite != null && currentFavoriteId != currentFavorite?.id) {
       SubwayPanelStore.saveCurrentFavoriteId(this, currentFavorite?.id)
@@ -166,7 +174,10 @@ class SubwayPanelService : Service() {
     val nextIndex = (currentIndex + direction).mod(favorites.size)
     currentFavorite = favorites[nextIndex]
     SubwayPanelStore.saveCurrentFavoriteId(this, currentFavorite?.id)
-    currentArrivals = emptyList()
+    currentArrivals = currentFavorite
+      ?.id
+      ?.let { arrivalsByFavoriteId[it].orEmpty() }
+      ?: emptyList()
   }
 
   private fun fetchLatestArrivals(force: Boolean = false) {
@@ -196,9 +207,13 @@ class SubwayPanelService : Service() {
         }
 
         mainHandler.post {
+          val now = System.currentTimeMillis()
+          val previousArrivals = arrivalsByFavoriteId[requestFavoriteId].orEmpty()
+          val reconciled = reconcileArrivals(previousArrivals, arrivals, now)
+          arrivalsByFavoriteId[requestFavoriteId] = reconciled
+
           if (currentFavorite?.id == requestFavoriteId) {
-            val now = System.currentTimeMillis()
-            currentArrivals = reconcileArrivals(arrivals, now)
+            currentArrivals = reconciled
             renderNotification()
           }
         }
@@ -218,8 +233,12 @@ class SubwayPanelService : Service() {
     }
   }
 
-  private fun reconcileArrivals(newArrivals: List<ArrivalItem>, nowMs: Long): List<ArrivalItem> {
-    val previousByTrainNo = currentArrivals
+  private fun reconcileArrivals(
+    previousArrivals: List<ArrivalItem>,
+    newArrivals: List<ArrivalItem>,
+    nowMs: Long,
+  ): List<ArrivalItem> {
+    val previousByTrainNo = previousArrivals
       .filter { it.btrainNo.isNotBlank() }
       .associateBy { it.btrainNo }
 
