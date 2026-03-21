@@ -29,8 +29,10 @@ data class ArrivalItem(
   val barvlDt: Int,
   val rawBarvlDt: Int,
   val apiObservedAtMs: Long,
+  val snapshotCapturedAtMs: Long,
   val btrainNo: String,
   val arvlMsg2: String,
+  val arvlCd: String,
   val lineName: String
 )
 
@@ -275,16 +277,25 @@ class SubwayPanelService : Service() {
       buildList {
         for (index in 0 until trains.length()) {
           val item = trains.optJSONObject(index) ?: continue
+          val rawBarvlDt = item.optInt("rawBarvlDt", item.optInt("barvlDt", 0))
+          val apiObservedAtMs = item.optLong("apiObservedAtMs", receivedAtMs)
+          val correctedSeconds = calculateCorrectedSnapshotSeconds(
+            rawBarvlDt = rawBarvlDt,
+            apiObservedAtMs = apiObservedAtMs,
+            snapshotCapturedAtMs = receivedAtMs,
+          )
           add(
             ArrivalItem(
               subwayId = item.optString("subwayId"),
               updnLine = item.optString("updnLine"),
               trainLineNm = item.optString("trainLineNm"),
-              barvlDt = item.optInt("barvlDt", 0),
-              rawBarvlDt = item.optInt("rawBarvlDt", 0),
-              apiObservedAtMs = item.optLong("apiObservedAtMs", receivedAtMs),
+              barvlDt = correctedSeconds,
+              rawBarvlDt = rawBarvlDt,
+              apiObservedAtMs = apiObservedAtMs,
+              snapshotCapturedAtMs = receivedAtMs,
               btrainNo = item.optString("btrainNo"),
               arvlMsg2 = item.optString("arvlMsg2"),
+              arvlCd = item.optString("arvlCd"),
               lineName = item.optString("lineName"),
             ),
           )
@@ -379,6 +390,11 @@ class SubwayPanelService : Service() {
   }
 
   private fun formatArrival(arrival: ArrivalItem): String {
+    val arrivalStatusText = getArrivalStatusText(arrival.arvlCd)
+    if (arrivalStatusText != null) {
+      return arrivalStatusText
+    }
+
     val displaySeconds = getDisplaySeconds(arrival, System.currentTimeMillis())
     if (shouldUseArrivalMessage(displaySeconds, arrival.arvlMsg2)) {
       return arrival.arvlMsg2.ifBlank { "도착 정보 없음" }
@@ -392,14 +408,32 @@ class SubwayPanelService : Service() {
   private fun shouldUseArrivalMessage(barvlDt: Int, message: String): Boolean =
     barvlDt <= 60
 
+  private fun getArrivalStatusText(arvlCd: String): String? =
+    when (arvlCd) {
+      "0" -> "당역 진입"
+      "1" -> "당역 도착"
+      else -> null
+    }
+
   private fun getDisplaySeconds(arrival: ArrivalItem, nowMs: Long): Int {
-    val referenceTimeMs = if (arrival.apiObservedAtMs > 0L) {
-      arrival.apiObservedAtMs
+    val referenceTimeMs = if (arrival.snapshotCapturedAtMs > 0L) {
+      arrival.snapshotCapturedAtMs
     } else {
       nowMs
     }
     val elapsedSeconds = floor((nowMs - referenceTimeMs).toDouble() / 1000.0).toInt().coerceAtLeast(0)
     return (arrival.barvlDt - elapsedSeconds).coerceAtLeast(0)
+  }
+
+  private fun calculateCorrectedSnapshotSeconds(
+    rawBarvlDt: Int,
+    apiObservedAtMs: Long,
+    snapshotCapturedAtMs: Long,
+  ): Int {
+    val elapsedSeconds = floor((snapshotCapturedAtMs - apiObservedAtMs).toDouble() / 1000.0)
+      .toInt()
+      .coerceAtLeast(0)
+    return (rawBarvlDt - elapsedSeconds).coerceAtLeast(0)
   }
 
   private fun normalizeDirectionLabel(updnLine: String): String =

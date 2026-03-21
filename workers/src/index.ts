@@ -20,6 +20,7 @@ type SeoulArrivalApiResponse = {
     btrainNo?: string;
     arvlMsg2?: string;
     arvlMsg3?: string;
+    arvlCd?: string;
     ordkey?: string;
     recptnDt?: string;
   }>;
@@ -35,6 +36,7 @@ type ArrivalTrain = {
   btrainNo: string;
   arvlMsg2: string;
   arvlMsg3: string;
+  arvlCd: string;
   ordkey: string;
   recptnDt: string;
   apiObservedAtMs: number;
@@ -137,6 +139,7 @@ function parseArrivalRows(payload: SeoulArrivalApiResponse): {
       btrainNo: row.btrainNo ?? "",
       arvlMsg2: row.arvlMsg2 ?? "",
       arvlMsg3: row.arvlMsg3 ?? "",
+      arvlCd: row.arvlCd ?? "",
       ordkey: row.ordkey ?? "",
       recptnDt: row.recptnDt ?? "",
       apiObservedAtMs: parseSeoulDateTimeToMs(row.recptnDt ?? ""),

@@ -8,6 +8,7 @@ export type ArrivalTrain = {
   btrainNo: string;
   arvlMsg2: string;
   arvlMsg3: string;
+  arvlCd: string;
   ordkey: string;
   recptnDt: string;
   apiObservedAtMs: number;

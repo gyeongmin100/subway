@@ -24,15 +24,15 @@ const SUBWAY_ID_TO_LINE_NAME: Record<string, string> = {
 };
 
 const LINE_NAME_ALIASES: Record<string, string> = {
-  "경강": "경강선",
-  "경의중앙": "경의중앙선",
-  "공항": "공항철도",
-  "경춘": "경춘선",
-  "수인분당": "수인분당선",
-  "신분당": "신분당선",
-  "우이신설": "우이신설선",
-  "서해": "서해선",
-  "신림": "신림선",
+  경강: "경강선",
+  경의중앙: "경의중앙선",
+  공항: "공항철도",
+  경춘: "경춘선",
+  수인분당: "수인분당선",
+  신분당: "신분당선",
+  우이신설: "우이신설선",
+  서해: "서해선",
+  신림: "신림선",
 };
 
 export function normalizeDirectionLabel(updnLine: string): string {
@@ -59,16 +59,31 @@ export function formatArrivalText(
   now: number,
 ): string {
   const seconds = getDisplaySeconds(train, fetchedAt, now);
-  const shouldUseArrivalMessage = seconds <= 60;
+  const statusText = getArrivalStatusText(train.arvlCd);
 
-  if (shouldUseArrivalMessage) {
+  if (statusText) {
+    return statusText;
+  }
+
+  if (seconds <= 60) {
     return train.arvlMsg2 || "도착 정보 없음";
   }
 
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
-
   return `${minutes}분 ${remainingSeconds}초`;
+}
+
+function getArrivalStatusText(arvlCd: string): string | null {
+  if (arvlCd === "0") {
+    return "당역 진입";
+  }
+
+  if (arvlCd === "1") {
+    return "당역 도착";
+  }
+
+  return null;
 }
 
 export function getLineNameFromTrain(train: ArrivalTrain): string {
