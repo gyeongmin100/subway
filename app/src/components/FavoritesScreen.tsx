@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { getFavoriteId, makeDisplayLabel } from "../lib/search";
 import type { Favorite } from "../types/favorite";
 
 type Props = {
@@ -37,18 +38,21 @@ export function FavoritesScreen({
       ) : (
         <ScrollView contentContainerStyle={styles.listContent}>
           {favorites.map((item, index) => {
-            const selected = item.id === currentFavoriteId;
+            const favoriteId = getFavoriteId(item);
+            const selected = favoriteId === currentFavoriteId;
 
             return (
               <View
-                key={item.id}
+                key={favoriteId}
                 style={[styles.row, selected ? styles.rowSelected : null]}
               >
                 <Pressable
-                  onPress={() => onSelectCurrentFavorite(item.id)}
+                  onPress={() => onSelectCurrentFavorite(favoriteId)}
                   style={styles.rowBody}
                 >
-                  <Text style={styles.rowTitle}>{item.displayLabel}</Text>
+                  <Text style={styles.rowTitle}>
+                    {makeDisplayLabel(item.stationName, item.lineName, item.directionLabel)}
+                  </Text>
                   <Text style={styles.rowMeta}>
                     {selected ? "현재 기준 즐겨찾기" : "누르면 현재 기준으로 선택됩니다"}
                   </Text>
@@ -58,7 +62,7 @@ export function FavoritesScreen({
                   <View style={styles.moveButtons}>
                     <Pressable
                       disabled={index === 0}
-                      onPress={() => onMove(item.id, -1)}
+                      onPress={() => onMove(favoriteId, -1)}
                       style={[
                         styles.moveButton,
                         index === 0 ? styles.disabledButton : null,
@@ -68,7 +72,7 @@ export function FavoritesScreen({
                     </Pressable>
                     <Pressable
                       disabled={index === favorites.length - 1}
-                      onPress={() => onMove(item.id, 1)}
+                      onPress={() => onMove(favoriteId, 1)}
                       style={[
                         styles.moveButton,
                         index === favorites.length - 1 ? styles.disabledButton : null,
@@ -78,7 +82,7 @@ export function FavoritesScreen({
                     </Pressable>
                   </View>
 
-                  <Pressable onPress={() => onDelete(item.id)} style={styles.deleteButton}>
+                  <Pressable onPress={() => onDelete(favoriteId)} style={styles.deleteButton}>
                     <Text style={styles.deleteLabel}>삭제</Text>
                   </Pressable>
                 </View>

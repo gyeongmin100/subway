@@ -4,7 +4,7 @@ const WORKER_BASE_URL = "https://subway.im100km.workers.dev";
 
 export async function fetchArrivals(
   stationName: string,
-  options?: { lineName?: string },
+  options?: { lineName?: string; directionLabel?: string },
 ): Promise<ArrivalsResponse> {
   const searchParams = new URLSearchParams({
     station: stationName,
@@ -12,6 +12,10 @@ export async function fetchArrivals(
 
   if (options?.lineName) {
     searchParams.set("line", options.lineName);
+  }
+
+  if (options?.directionLabel) {
+    searchParams.set("direction", options.directionLabel);
   }
 
   const response = await fetch(

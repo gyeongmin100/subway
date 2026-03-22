@@ -1,24 +1,9 @@
 import stationMasterJson from "../data/stationMaster.json";
 import type { Favorite } from "../types/favorite";
 import type { SearchResult, StationMasterRow } from "../types/search";
-import {
-  getApiStationName,
-  getOfficialStationName,
-  getStationSearchAliases,
-} from "./stationNames";
+import { getOfficialStationName, getStationSearchAliases } from "./stationNames";
 
 const DIRECTION_LABELS = ["상행", "하행"] as const;
-const LINE_NAME_ALIASES: Record<string, string> = {
-  경강: "경강선",
-  경의중앙: "경의중앙선",
-  공항: "공항철도",
-  경춘: "경춘선",
-  수인분당: "수인분당선",
-  신분당: "신분당선",
-  우이신설: "우이신설선",
-  서해: "서해선",
-  신림: "신림선",
-};
 const REALTIME_SUPPORTED_LINES = new Set([
   "1호선",
   "2호선",
@@ -44,8 +29,7 @@ const REALTIME_SUPPORTED_LINES = new Set([
 const stationRows = stationMasterJson as StationMasterRow[];
 
 function normalizeLineName(lineName: string): string {
-  const compact = lineName.trim().replace(/\s+/g, "");
-  return LINE_NAME_ALIASES[compact] ?? compact;
+  return lineName.trim().replace(/\s+/g, "");
 }
 
 function normalizeSearchText(value: string): string {
@@ -82,7 +66,7 @@ export function isRealtimeSupportedLine(lineName: string): boolean {
   return REALTIME_SUPPORTED_LINES.has(normalizeLineName(lineName));
 }
 
-function makeDisplayLabel(
+export function makeDisplayLabel(
   stationName: string,
   lineName: string,
   directionLabel: string,
@@ -90,22 +74,22 @@ function makeDisplayLabel(
   return `${stationName} ${lineName} ${directionLabel}`;
 }
 
+export function getFavoriteId(favorite: Favorite): string {
+  return `${favorite.stationName}:${favorite.lineName}:${favorite.directionLabel}`;
+}
+
 const uniqueStationLines = Array.from(
   new Map(
     stationRows
       .map((row) => {
         const officialStationName = getOfficialStationName(row.stationName);
-        const apiStationName = getApiStationName(row.stationName);
         const lineName = normalizeLineName(row.lineName);
 
         return [
           `${officialStationName}:${lineName}`,
           {
             stationName: officialStationName,
-            apiStationName,
             lineName,
-            operatorName: row.operatorName,
-            stationCode: row.stationCode,
           },
         ] as const;
       })
@@ -115,15 +99,9 @@ const uniqueStationLines = Array.from(
 
 export const SEARCH_MASTER: SearchResult[] = uniqueStationLines.flatMap((item) =>
   DIRECTION_LABELS.map((directionLabel) => ({
-    key: `${item.stationName}:${item.lineName}:${directionLabel}`,
     stationName: item.stationName,
-    apiStationName: item.apiStationName,
     lineName: item.lineName,
-    operatorName: item.operatorName,
-    stationCode: item.stationCode,
     directionLabel,
-    branchKey: `${item.lineName}:${directionLabel}`,
-    displayLabel: makeDisplayLabel(item.stationName, item.lineName, directionLabel),
   })),
 );
 
@@ -138,33 +116,31 @@ export function searchStations(query: string): SearchResult[] {
       ...getStationSearchAliases(item.stationName),
       ...getSearchVariants(item.stationName),
       ...getSearchVariants(item.lineName),
-      ...getSearchVariants(item.displayLabel),
+      ...getSearchVariants(makeDisplayLabel(item.stationName, item.lineName, item.directionLabel)),
     ].some((value) => normalizeSearchText(value).includes(normalizedQuery)),
-  ).sort((left, right) => left.displayLabel.localeCompare(right.displayLabel, "ko-KR"));
+  ).sort((left, right) =>
+    makeDisplayLabel(left.stationName, left.lineName, left.directionLabel).localeCompare(
+      makeDisplayLabel(right.stationName, right.lineName, right.directionLabel),
+      "ko-KR",
+    ),
+  );
 }
 
 export function favoriteFromSearchResult(result: SearchResult): Favorite {
   return {
-    id: result.key,
     stationName: result.stationName,
-    apiStationName: result.apiStationName,
     lineName: result.lineName,
     directionLabel: result.directionLabel,
-    displayLabel: result.displayLabel,
   };
 }
 
 export function normalizeFavorite(favorite: Favorite): Favorite {
   const stationName = getOfficialStationName(favorite.stationName);
-  const apiStationName = favorite.apiStationName || getApiStationName(favorite.stationName);
   const lineName = normalizeLineName(favorite.lineName);
 
   return {
-    id: `${stationName}:${lineName}:${favorite.directionLabel}`,
     stationName,
-    apiStationName,
     lineName,
     directionLabel: favorite.directionLabel,
-    displayLabel: makeDisplayLabel(stationName, lineName, favorite.directionLabel),
   };
 }

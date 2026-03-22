@@ -1,7 +1,12 @@
 import * as React from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { favoriteFromSearchResult, searchStations } from "../lib/search";
+import {
+  favoriteFromSearchResult,
+  getFavoriteId,
+  makeDisplayLabel,
+  searchStations,
+} from "../lib/search";
 import type { Favorite } from "../types/favorite";
 
 type Props = {
@@ -67,11 +72,13 @@ export function SearchScreen({
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {favorites.map((favorite) => (
               <Pressable
-                key={favorite.id}
-                onPress={() => onSelectCurrentFavorite(favorite.id)}
+                key={getFavoriteId(favorite)}
+                onPress={() => onSelectCurrentFavorite(getFavoriteId(favorite))}
                 style={styles.favoriteChip}
               >
-                <Text style={styles.favoriteChipText}>{favorite.displayLabel}</Text>
+                <Text style={styles.favoriteChipText}>
+                  {makeDisplayLabel(favorite.stationName, favorite.lineName, favorite.directionLabel)}
+                </Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -87,12 +94,17 @@ export function SearchScreen({
         <ScrollView contentContainerStyle={styles.resultList}>
           {results.map((result) => (
             <Pressable
-              key={result.key}
+              key={getFavoriteId(result)}
               onPress={() => {
                 const candidate = favoriteFromSearchResult(result);
+                const displayLabel = makeDisplayLabel(
+                  result.stationName,
+                  result.lineName,
+                  result.directionLabel,
+                );
                 Alert.alert(
                   "즐겨찾기 추가",
-                  `${result.displayLabel}을 즐겨찾기에 추가할까요?`,
+                  `${displayLabel}을 즐겨찾기에 추가할까요?`,
                   [
                     { text: "취소", style: "cancel" },
                     {
@@ -102,7 +114,7 @@ export function SearchScreen({
                         if (!added) {
                           Alert.alert(
                             "추가 실패",
-                            favorites.some((item) => item.id === candidate.id)
+                            favorites.some((item) => getFavoriteId(item) === getFavoriteId(candidate))
                               ? "이미 추가한 즐겨찾기입니다"
                               : "즐겨찾기는 최대 3개까지 가능합니다",
                           );

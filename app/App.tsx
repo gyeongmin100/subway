@@ -4,6 +4,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import { FavoritesScreen } from "./src/components/FavoritesScreen";
 import { SearchScreen } from "./src/components/SearchScreen";
+import { getFavoriteId } from "./src/lib/search";
 import { syncNativePanelState } from "./src/lib/nativePanel";
 import {
   loadCurrentFavoriteId,
@@ -36,9 +37,10 @@ export default function App() {
 
       setFavorites(storedFavorites);
       setCurrentFavoriteId(
-        storedCurrentFavoriteId && storedFavorites.some((item) => item.id === storedCurrentFavoriteId)
+        storedCurrentFavoriteId
+          && storedFavorites.some((item) => getFavoriteId(item) === storedCurrentFavoriteId)
           ? storedCurrentFavoriteId
-          : storedFavorites[0]?.id ?? null,
+          : (storedFavorites[0] ? getFavoriteId(storedFavorites[0]) : null),
       );
       setHydrated(true);
     }
@@ -75,7 +77,9 @@ export default function App() {
   }, [currentFavoriteId, favorites, hydrated]);
 
   function addFavorite(favorite: Favorite): boolean {
-    if (favorites.some((item) => item.id === favorite.id)) {
+    const favoriteId = getFavoriteId(favorite);
+
+    if (favorites.some((item) => getFavoriteId(item) === favoriteId)) {
       return false;
     }
 
@@ -85,16 +89,16 @@ export default function App() {
 
     const nextFavorites = [...favorites, favorite];
     setFavorites(nextFavorites);
-    setCurrentFavoriteId(favorite.id);
+    setCurrentFavoriteId(favoriteId);
     return true;
   }
 
   function deleteFavorite(favoriteId: string) {
-    const nextFavorites = favorites.filter((item) => item.id !== favoriteId);
+    const nextFavorites = favorites.filter((item) => getFavoriteId(item) !== favoriteId);
     setFavorites(nextFavorites);
 
     if (currentFavoriteId === favoriteId) {
-      setCurrentFavoriteId(nextFavorites[0]?.id ?? null);
+      setCurrentFavoriteId(nextFavorites[0] ? getFavoriteId(nextFavorites[0]) : null);
     }
   }
 
@@ -119,7 +123,7 @@ export default function App() {
             onDelete={deleteFavorite}
             onMove={(favoriteId, direction) => {
               setFavorites((current) => {
-                const index = current.findIndex((item) => item.id === favoriteId);
+                const index = current.findIndex((item) => getFavoriteId(item) === favoriteId);
                 const nextIndex = index + direction;
 
                 if (index < 0 || nextIndex < 0 || nextIndex >= current.length) {

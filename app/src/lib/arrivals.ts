@@ -23,18 +23,6 @@ const SUBWAY_ID_TO_LINE_NAME: Record<string, string> = {
   "1094": "신림선",
 };
 
-const LINE_NAME_ALIASES: Record<string, string> = {
-  경강: "경강선",
-  경의중앙: "경의중앙선",
-  공항: "공항철도",
-  경춘: "경춘선",
-  수인분당: "수인분당선",
-  신분당: "신분당선",
-  우이신설: "우이신설선",
-  서해: "서해선",
-  신림: "신림선",
-};
-
 export function normalizeDirectionLabel(updnLine: string): string {
   if (updnLine === "내선") {
     return "상행";
@@ -91,22 +79,10 @@ export function getLineNameFromTrain(train: ArrivalTrain): string {
 }
 
 function normalizeLineName(value: string): string {
-  const compact = value.trim().replace(/\s+/g, "");
-  return LINE_NAME_ALIASES[compact] ?? compact;
+  return value.trim().replace(/\s+/g, "");
 }
 
 export function matchesFavorite(train: ArrivalTrain, favorite: Favorite): boolean {
   const lineName = getLineNameFromTrain(train);
-  if (lineName && normalizeLineName(lineName) !== normalizeLineName(favorite.lineName)) {
-    return false;
-  }
-
-  if (favorite.directionLabel) {
-    const normalizedDirection = normalizeDirectionLabel(train.updnLine);
-    if (normalizedDirection !== favorite.directionLabel) {
-      return false;
-    }
-  }
-
-  return true;
+  return !lineName || normalizeLineName(lineName) === normalizeLineName(favorite.lineName);
 }
