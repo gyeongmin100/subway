@@ -17,6 +17,7 @@ object SubwayPanelStore {
   private const val PREFS_NAME = "subway_panel_prefs"
   private const val FAVORITES_KEY = "favorites_json"
   private const val CURRENT_FAVORITE_ID_KEY = "current_favorite_id"
+  private const val ARRIVAL_SNAPSHOTS_KEY = "arrival_snapshots_json"
 
   fun getFavoritesJson(context: Context): String? =
     context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -39,6 +40,74 @@ object SubwayPanelStore {
       .edit()
       .putString(CURRENT_FAVORITE_ID_KEY, currentFavoriteId)
       .apply()
+  }
+
+  fun saveArrivalSnapshots(
+    context: Context,
+    arrivalsByFavoriteId: Map<String, List<ArrivalItem>>,
+  ) {
+    val root = JSONObject()
+    arrivalsByFavoriteId.forEach { (favoriteId, arrivals) ->
+      val array = JSONArray()
+      arrivals.forEach { arrival ->
+        array.put(
+          JSONObject()
+            .put("subwayId", arrival.subwayId)
+            .put("updnLine", arrival.updnLine)
+            .put("trainLineNm", arrival.trainLineNm)
+            .put("rawBarvlDt", arrival.rawBarvlDt)
+            .put("apiObservedAtMs", arrival.apiObservedAtMs)
+            .put("expectedArrivalAtMs", arrival.expectedArrivalAtMs)
+            .put("btrainNo", arrival.btrainNo)
+            .put("arvlMsg2", arrival.arvlMsg2)
+            .put("arvlCd", arrival.arvlCd)
+            .put("lineName", arrival.lineName)
+        )
+      }
+      root.put(favoriteId, array)
+    }
+
+    context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+      .edit()
+      .putString(ARRIVAL_SNAPSHOTS_KEY, root.toString())
+      .apply()
+  }
+
+  fun getArrivalSnapshots(context: Context): Map<String, List<ArrivalItem>> {
+    val raw = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+      .getString(ARRIVAL_SNAPSHOTS_KEY, null)
+      ?: return emptyMap()
+
+    val root = JSONObject(raw)
+    return buildMap {
+      val keys = root.keys()
+      while (keys.hasNext()) {
+        val favoriteId = keys.next()
+        val array = root.optJSONArray(favoriteId) ?: continue
+        put(
+          favoriteId,
+          buildList {
+            for (index in 0 until array.length()) {
+              val item = array.optJSONObject(index) ?: continue
+              add(
+                ArrivalItem(
+                  subwayId = item.optString("subwayId"),
+                  updnLine = item.optString("updnLine"),
+                  trainLineNm = item.optString("trainLineNm"),
+                  rawBarvlDt = item.optInt("rawBarvlDt", 0),
+                  apiObservedAtMs = item.optLong("apiObservedAtMs", 0L),
+                  expectedArrivalAtMs = item.optLong("expectedArrivalAtMs", 0L),
+                  btrainNo = item.optString("btrainNo"),
+                  arvlMsg2 = item.optString("arvlMsg2"),
+                  arvlCd = item.optString("arvlCd"),
+                  lineName = item.optString("lineName")
+                )
+              )
+            }
+          }
+        )
+      }
+    }
   }
 
   fun getFavorites(context: Context): List<FavoriteItem> {

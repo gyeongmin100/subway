@@ -26,10 +26,9 @@ data class ArrivalItem(
   val subwayId: String,
   val updnLine: String,
   val trainLineNm: String,
-  val barvlDt: Int,
   val rawBarvlDt: Int,
   val apiObservedAtMs: Long,
-  val snapshotCapturedAtMs: Long,
+  val expectedArrivalAtMs: Long,
   val btrainNo: String,
   val arvlMsg2: String,
   val arvlCd: String,
@@ -146,6 +145,10 @@ class SubwayPanelService : Service() {
     favorites = SubwayPanelStore.getFavorites(this)
     val currentFavoriteId = SubwayPanelStore.getCurrentFavoriteId(this)
     val validFavoriteIds = favorites.map { it.id }.toSet()
+    val restoredArrivals = SubwayPanelStore.getArrivalSnapshots(this)
+      .filterKeys { it in validFavoriteIds }
+    arrivalsByFavoriteId.clear()
+    arrivalsByFavoriteId.putAll(restoredArrivals)
     arrivalsByFavoriteId.keys.retainAll(validFavoriteIds)
 
     currentFavorite = favorites.firstOrNull { it.id == currentFavoriteId }
@@ -198,11 +201,17 @@ class SubwayPanelService : Service() {
     val requestFavoriteId = favorite.id
     executor.execute {
       try {
-        var arrivals = requestArrivals(favorite.apiStationName, favorite.lineName)
+        var arrivals = requestArrivals(
+          favorite.apiStationName,
+          favorite.lineName,
+        )
           .filter { matchesFavorite(it, favorite) }
 
         if (arrivals.isEmpty()) {
-          arrivals = requestArrivals(favorite.apiStationName, null)
+          arrivals = requestArrivals(
+            favorite.apiStationName,
+            null,
+          )
             .filter { matchesFavorite(it, favorite) }
         }
 
@@ -211,6 +220,7 @@ class SubwayPanelService : Service() {
           val previousArrivals = arrivalsByFavoriteId[requestFavoriteId].orEmpty()
           val reconciled = reconcileArrivals(previousArrivals, arrivals, now)
           arrivalsByFavoriteId[requestFavoriteId] = reconciled
+          SubwayPanelStore.saveArrivalSnapshots(this, arrivalsByFavoriteId)
 
           if (currentFavorite?.id == requestFavoriteId) {
             currentArrivals = reconciled
@@ -238,28 +248,7 @@ class SubwayPanelService : Service() {
     newArrivals: List<ArrivalItem>,
     nowMs: Long,
   ): List<ArrivalItem> {
-    val previousByTrainNo = previousArrivals
-      .filter { it.btrainNo.isNotBlank() }
-      .associateBy { it.btrainNo }
-
-    val reconciled = newArrivals.map { incoming ->
-      val previous = previousByTrainNo[incoming.btrainNo]
-      if (previous == null) {
-        return@map incoming
-      }
-
-      val previousDisplaySeconds = getDisplaySeconds(previous, nowMs)
-      val incomingDisplaySeconds = getDisplaySeconds(incoming, nowMs)
-      val hasSameSnapshot = kotlin.math.abs(previousDisplaySeconds - incomingDisplaySeconds) <= 1
-
-      if (hasSameSnapshot) {
-        return@map previous
-      }
-
-      incoming
-    }
-
-    val sorted = reconciled.sortedWith(
+    val sorted = newArrivals.sortedWith(
       compareBy<ArrivalItem> { getDisplaySeconds(it, nowMs) }
         .thenBy { it.ordKeyValue() },
     )
@@ -267,14 +256,19 @@ class SubwayPanelService : Service() {
     return sorted
   }
 
-  private fun requestArrivals(stationName: String, lineName: String?): List<ArrivalItem> {
+  private fun requestArrivals(
+    stationName: String,
+    lineName: String?,
+  ): List<ArrivalItem> {
     val encodedStation = URLEncoder.encode(stationName, "UTF-8")
-    val query = if (lineName.isNullOrBlank()) {
-      "station=$encodedStation"
-    } else {
+    val queryParts = mutableListOf("station=$encodedStation")
+
+    if (!lineName.isNullOrBlank()) {
       val encodedLine = URLEncoder.encode(lineName, "UTF-8")
-      "station=$encodedStation&line=$encodedLine"
+      queryParts += "line=$encodedLine"
     }
+
+    val query = queryParts.joinToString("&")
 
     val url = URL("$WORKER_BASE_URL/api/arrivals?$query")
     val connection = (url.openConnection() as HttpURLConnection).apply {
@@ -297,21 +291,19 @@ class SubwayPanelService : Service() {
         for (index in 0 until trains.length()) {
           val item = trains.optJSONObject(index) ?: continue
           val rawBarvlDt = item.optInt("rawBarvlDt", item.optInt("barvlDt", 0))
-          val apiObservedAtMs = item.optLong("apiObservedAtMs", receivedAtMs)
-          val correctedSeconds = calculateCorrectedSnapshotSeconds(
+          val apiObservedAtMs = item.optLong("apiObservedAtMs")
+          val expectedArrivalAtMs = calculateExpectedArrivalAtMs(
             rawBarvlDt = rawBarvlDt,
             apiObservedAtMs = apiObservedAtMs,
-            snapshotCapturedAtMs = receivedAtMs,
           )
           add(
             ArrivalItem(
               subwayId = item.optString("subwayId"),
               updnLine = item.optString("updnLine"),
               trainLineNm = item.optString("trainLineNm"),
-              barvlDt = correctedSeconds,
               rawBarvlDt = rawBarvlDt,
               apiObservedAtMs = apiObservedAtMs,
-              snapshotCapturedAtMs = receivedAtMs,
+              expectedArrivalAtMs = expectedArrivalAtMs,
               btrainNo = item.optString("btrainNo"),
               arvlMsg2 = item.optString("arvlMsg2"),
               arvlCd = item.optString("arvlCd"),
@@ -400,8 +392,27 @@ class SubwayPanelService : Service() {
       return false
     }
 
-    return normalizeDirectionLabel(arrival.updnLine) == favorite.directionLabel
+    if (!matchesDirection(arrival.updnLine, favorite.directionLabel)) {
+      return false
+    }
+
+    return true
   }
+
+  private fun matchesDirection(updnLine: String, directionLabel: String): Boolean {
+    if (directionLabel.isBlank()) {
+      return true
+    }
+
+    return normalizeDirectionLabel(updnLine) == directionLabel.trim()
+  }
+
+  private fun normalizeDirectionLabel(updnLine: String): String =
+    when (updnLine.trim()) {
+      "외선" -> "상행"
+      "내선" -> "하행"
+      else -> updnLine.trim()
+    }
 
   private fun extractDestination(trainLineNm: String): String {
     val segments = trainLineNm.split(" - ")
@@ -435,35 +446,24 @@ class SubwayPanelService : Service() {
     }
 
   private fun getDisplaySeconds(arrival: ArrivalItem, nowMs: Long): Int {
-    val referenceTimeMs = if (arrival.snapshotCapturedAtMs > 0L) {
-      arrival.snapshotCapturedAtMs
-    } else {
-      nowMs
+    if (arrival.expectedArrivalAtMs <= 0L) {
+      return 0
     }
-    val elapsedSeconds = floor((nowMs - referenceTimeMs).toDouble() / 1000.0).toInt().coerceAtLeast(0)
-    return (arrival.barvlDt - elapsedSeconds).coerceAtLeast(0)
+
+    val remainingMs = (arrival.expectedArrivalAtMs - nowMs).coerceAtLeast(0L)
+    return floor(remainingMs.toDouble() / 1000.0).toInt()
   }
 
-  private fun calculateCorrectedSnapshotSeconds(
+  private fun calculateExpectedArrivalAtMs(
     rawBarvlDt: Int,
     apiObservedAtMs: Long,
-    snapshotCapturedAtMs: Long,
-  ): Int {
-    val elapsedSeconds = floor((snapshotCapturedAtMs - apiObservedAtMs).toDouble() / 1000.0)
-      .toInt()
-      .coerceAtLeast(0)
-    return (rawBarvlDt - elapsedSeconds).coerceAtLeast(0)
+  ): Long {
+    val sanitizedSeconds = rawBarvlDt.coerceAtLeast(0)
+    return apiObservedAtMs + (sanitizedSeconds * 1000L)
   }
 
-  private fun normalizeDirectionLabel(updnLine: String): String =
-    when (updnLine) {
-      "내선" -> "상행"
-      "외선" -> "하행"
-      else -> updnLine
-    }
-
   private fun ArrivalItem.ordKeyValue(): String =
-    "${this.barvlDt.toString().padStart(6, '0')}:${this.btrainNo}:${this.trainLineNm}"
+    "${this.expectedArrivalAtMs.toString().padStart(16, '0')}:${this.btrainNo}:${this.trainLineNm}"
 
   private fun <T> HttpURLConnection.useConnection(block: HttpURLConnection.() -> T): T =
     try {
