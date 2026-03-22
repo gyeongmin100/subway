@@ -1,6 +1,18 @@
 import * as React from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
+import type {
+  AddFavoriteFailureReason,
+  AddFavoriteResult,
+} from "../lib/favorites";
 import {
   favoriteFromSearchResult,
   getFavoriteId,
@@ -11,7 +23,7 @@ import type { Favorite } from "../types/favorite";
 
 type Props = {
   favorites: Favorite[];
-  onAddFavorite: (favorite: Favorite) => boolean;
+  onAddFavorite: (favorite: Favorite) => AddFavoriteResult;
   onOpenFavorites: () => void;
   onSelectCurrentFavorite: (favoriteId: string) => void;
 };
@@ -22,6 +34,14 @@ function Chip({ label }: { label: string }) {
       <Text style={styles.chipText}>{label}</Text>
     </View>
   );
+}
+
+function getFavoriteErrorMessage(reason: AddFavoriteFailureReason): string {
+  if (reason === "duplicate") {
+    return "\uC774\uBBF8 \uCD94\uAC00\uB41C \uC990\uACA8\uCC3E\uAE30\uC785\uB2C8\uB2E4.";
+  }
+
+  return "\uC990\uACA8\uCC3E\uAE30\uB294 \uCD5C\uB300 3\uAC1C\uAE4C\uC9C0 \uAC00\uB2A5\uD569\uB2C8\uB2E4.";
 }
 
 export function SearchScreen({
@@ -38,12 +58,12 @@ export function SearchScreen({
       <View style={styles.header}>
         <View>
           <Text style={styles.eyebrow}>SEARCH</Text>
-          <Text style={styles.title}>역 검색</Text>
+          <Text style={styles.title}>\uC5ED \uAC80\uC0C9</Text>
         </View>
 
         <View style={styles.headerActions}>
           <Pressable onPress={onOpenFavorites} style={styles.primaryButton}>
-            <Text style={styles.primaryLabel}>즐겨찾기</Text>
+            <Text style={styles.primaryLabel}>\uC990\uACA8\uCC3E\uAE30</Text>
           </Pressable>
         </View>
       </View>
@@ -52,7 +72,7 @@ export function SearchScreen({
         <TextInput
           autoCapitalize="none"
           onChangeText={setQuery}
-          placeholder="역 이름을 검색하세요"
+          placeholder="\uC5ED \uC774\uB984\uC744 \uAC80\uC0C9\uD558\uC138\uC694"
           placeholderTextColor="#7a7a7a"
           style={styles.input}
           value={query}
@@ -65,9 +85,9 @@ export function SearchScreen({
       </View>
 
       <View style={styles.favoriteStrip}>
-        <Text style={styles.sectionTitle}>현재 즐겨찾기</Text>
+        <Text style={styles.sectionTitle}>\uD604\uC7AC \uC990\uACA8\uCC3E\uAE30</Text>
         {favorites.length === 0 ? (
-          <Text style={styles.emptyText}>즐겨찾기를 추가해보세요</Text>
+          <Text style={styles.emptyText}>\uC990\uACA8\uCC3E\uAE30\uB97C \uCD94\uAC00\uD574\uBCF4\uC138\uC694</Text>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {favorites.map((favorite) => (
@@ -77,7 +97,11 @@ export function SearchScreen({
                 style={styles.favoriteChip}
               >
                 <Text style={styles.favoriteChipText}>
-                  {makeDisplayLabel(favorite.stationName, favorite.lineName, favorite.directionLabel)}
+                  {makeDisplayLabel(
+                    favorite.stationName,
+                    favorite.lineName,
+                    favorite.directionLabel,
+                  )}
                 </Text>
               </Pressable>
             ))}
@@ -85,11 +109,13 @@ export function SearchScreen({
         )}
       </View>
 
-      <Text style={styles.sectionTitle}>검색 결과</Text>
+      <Text style={styles.sectionTitle}>\uAC80\uC0C9 \uACB0\uACFC</Text>
       {query.trim().length < 2 ? (
-        <Text style={styles.helperText}>2글자 이상 입력하면 검색이 시작됩니다.</Text>
+        <Text style={styles.helperText}>
+          2\uAE00\uC790 \uC774\uC0C1 \uC785\uB825\uD558\uBA74 \uAC80\uC0C9\uC774 \uC2DC\uC791\uB429\uB2C8\uB2E4.
+        </Text>
       ) : results.length === 0 ? (
-        <Text style={styles.helperText}>검색 결과가 없습니다</Text>
+        <Text style={styles.helperText}>\uAC80\uC0C9 \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.</Text>
       ) : (
         <ScrollView contentContainerStyle={styles.resultList}>
           {results.map((result) => (
@@ -102,21 +128,20 @@ export function SearchScreen({
                   result.lineName,
                   result.directionLabel,
                 );
+
                 Alert.alert(
-                  "즐겨찾기 추가",
-                  `${displayLabel}을 즐겨찾기에 추가할까요?`,
+                  "\uC990\uACA8\uCC3E\uAE30 \uCD94\uAC00",
+                  `${displayLabel}\uC744 \uC990\uACA8\uCC3E\uAE30\uC5D0 \uCD94\uAC00\uD560\uAE4C\uC694?`,
                   [
-                    { text: "취소", style: "cancel" },
+                    { text: "\uCDE8\uC18C", style: "cancel" },
                     {
-                      text: "추가",
+                      text: "\uCD94\uAC00",
                       onPress: () => {
-                        const added = onAddFavorite(candidate);
-                        if (!added) {
+                        const addResult = onAddFavorite(candidate);
+                        if (!addResult.ok) {
                           Alert.alert(
-                            "추가 실패",
-                            favorites.some((item) => getFavoriteId(item) === getFavoriteId(candidate))
-                              ? "이미 추가한 즐겨찾기입니다"
-                              : "즐겨찾기는 최대 3개까지 가능합니다",
+                            "\uCD94\uAC00 \uC2E4\uD328",
+                            getFavoriteErrorMessage(addResult.reason),
                           );
                         }
                       },

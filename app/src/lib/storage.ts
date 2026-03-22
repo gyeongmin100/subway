@@ -7,22 +7,39 @@ import type { Favorite } from "../types/favorite";
 const FAVORITES_KEY = "subway.favorite_list";
 const CURRENT_FAVORITE_ID_KEY = "subway.current_favorite_id";
 
-export async function loadFavorites(): Promise<Favorite[]> {
-  const nativeSnapshot = await loadNativePanelSnapshot();
-  if (nativeSnapshot?.favorites?.length) {
-    return nativeSnapshot.favorites
-      .map(normalizeFavorite)
-      .filter((favorite) => isRealtimeSupportedLine(favorite.lineName));
-  }
+type PersistedFavoritesState = {
+  favorites: Favorite[];
+  currentFavoriteId: string | null;
+};
 
-  const raw = await AsyncStorage.getItem(FAVORITES_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  return (JSON.parse(raw) as Favorite[])
+function normalizeFavorites(favorites: Favorite[]): Favorite[] {
+  return favorites
     .map(normalizeFavorite)
     .filter((favorite) => isRealtimeSupportedLine(favorite.lineName));
+}
+
+export async function loadPersistedFavoritesState(): Promise<PersistedFavoritesState> {
+  const nativeSnapshot = await loadNativePanelSnapshot();
+  if (nativeSnapshot) {
+    return {
+      favorites: normalizeFavorites(nativeSnapshot.favorites),
+      currentFavoriteId: nativeSnapshot.currentFavoriteId,
+    };
+  }
+
+  const [rawFavorites, currentFavoriteId] = await Promise.all([
+    AsyncStorage.getItem(FAVORITES_KEY),
+    AsyncStorage.getItem(CURRENT_FAVORITE_ID_KEY),
+  ]);
+
+  return {
+    favorites: rawFavorites ? normalizeFavorites(JSON.parse(rawFavorites) as Favorite[]) : [],
+    currentFavoriteId,
+  };
+}
+
+export async function loadFavorites(): Promise<Favorite[]> {
+  return (await loadPersistedFavoritesState()).favorites;
 }
 
 export async function saveFavorites(favorites: Favorite[]): Promise<void> {
@@ -30,12 +47,7 @@ export async function saveFavorites(favorites: Favorite[]): Promise<void> {
 }
 
 export async function loadCurrentFavoriteId(): Promise<string | null> {
-  const nativeSnapshot = await loadNativePanelSnapshot();
-  if (nativeSnapshot?.currentFavoriteId) {
-    return nativeSnapshot.currentFavoriteId;
-  }
-
-  return AsyncStorage.getItem(CURRENT_FAVORITE_ID_KEY);
+  return (await loadPersistedFavoritesState()).currentFavoriteId;
 }
 
 export async function saveCurrentFavoriteId(id: string | null): Promise<void> {

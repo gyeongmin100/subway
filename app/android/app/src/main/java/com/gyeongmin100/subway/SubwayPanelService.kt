@@ -248,12 +248,46 @@ class SubwayPanelService : Service() {
     newArrivals: List<ArrivalItem>,
     nowMs: Long,
   ): List<ArrivalItem> {
-    val sorted = newArrivals.sortedWith(
+    val previousArrivalsByKey = previousArrivals.associateBy { it.identityKey() }
+    val reconciled = newArrivals.map { newArrival ->
+      val previousArrival = previousArrivalsByKey[newArrival.identityKey()]
+      reconcileArrival(previousArrival, newArrival, nowMs)
+    }
+
+    val sorted = reconciled.sortedWith(
       compareBy<ArrivalItem> { getDisplaySeconds(it, nowMs) }
         .thenBy { it.ordKeyValue() },
     )
 
     return sorted
+  }
+
+  private fun reconcileArrival(
+    previousArrival: ArrivalItem?,
+    newArrival: ArrivalItem,
+    nowMs: Long,
+  ): ArrivalItem {
+    if (previousArrival == null) {
+      return newArrival
+    }
+
+    if (previousArrival.expectedArrivalAtMs <= nowMs) {
+      return newArrival
+    }
+
+    if (newArrival.expectedArrivalAtMs < previousArrival.expectedArrivalAtMs) {
+      return newArrival
+    }
+
+    val rawBarvlDtDelta = kotlin.math.abs(newArrival.rawBarvlDt - previousArrival.rawBarvlDt)
+    if (
+      rawBarvlDtDelta <= ETA_STABLE_THRESHOLD_SEC &&
+      newArrival.expectedArrivalAtMs > previousArrival.expectedArrivalAtMs
+    ) {
+      return newArrival.copy(expectedArrivalAtMs = previousArrival.expectedArrivalAtMs)
+    }
+
+    return newArrival
   }
 
   private fun requestArrivals(
@@ -409,8 +443,8 @@ class SubwayPanelService : Service() {
 
   private fun normalizeDirectionLabel(updnLine: String): String =
     when (updnLine.trim()) {
-      "외선" -> "상행"
-      "내선" -> "하행"
+      "내선" -> "상행"
+      "외선" -> "하행"
       else -> updnLine.trim()
     }
 
@@ -465,6 +499,9 @@ class SubwayPanelService : Service() {
   private fun ArrivalItem.ordKeyValue(): String =
     "${this.expectedArrivalAtMs.toString().padStart(16, '0')}:${this.btrainNo}:${this.trainLineNm}"
 
+  private fun ArrivalItem.identityKey(): String =
+    "${this.btrainNo}:${this.subwayId}:${this.updnLine.trim()}"
+
   private fun <T> HttpURLConnection.useConnection(block: HttpURLConnection.() -> T): T =
     try {
       connect()
@@ -484,6 +521,7 @@ class SubwayPanelService : Service() {
     private const val NOTIFICATION_ID = 41001
     private const val REFRESH_INTERVAL_MS = 5_000L
     private const val WORKER_BASE_URL = "https://subway.im100km.workers.dev"
+    private const val ETA_STABLE_THRESHOLD_SEC = 3
 
     private const val REQUEST_PREVIOUS = 101
     private const val REQUEST_REFRESH = 102

@@ -1,39 +1,8 @@
+import { getLineNameFromSubwayId, normalizeDirectionLabel, normalizeLineName } from "../../../shared/subwayRules";
 import type { ArrivalTrain } from "../types/arrival";
 import type { Favorite } from "../types/favorite";
 
-const SUBWAY_ID_TO_LINE_NAME: Record<string, string> = {
-  "1001": "1호선",
-  "1002": "2호선",
-  "1003": "3호선",
-  "1004": "4호선",
-  "1005": "5호선",
-  "1006": "6호선",
-  "1007": "7호선",
-  "1008": "8호선",
-  "1009": "9호선",
-  "1032": "GTX-A",
-  "1081": "경강선",
-  "1063": "경의중앙선",
-  "1065": "공항철도",
-  "1067": "경춘선",
-  "1075": "수인분당선",
-  "1077": "신분당선",
-  "1092": "우이신설선",
-  "1093": "서해선",
-  "1094": "신림선",
-};
-
-export function normalizeDirectionLabel(updnLine: string): string {
-  if (updnLine === "내선") {
-    return "상행";
-  }
-
-  if (updnLine === "외선") {
-    return "하행";
-  }
-
-  return updnLine;
-}
+export { normalizeDirectionLabel };
 
 export function getDisplaySeconds(train: ArrivalTrain, fetchedAt: number, now: number): number {
   const observedAtMs = train.apiObservedAtMs > 0 ? train.apiObservedAtMs : fetchedAt;
@@ -54,32 +23,28 @@ export function formatArrivalText(
   }
 
   if (seconds <= 60) {
-    return train.arvlMsg2 || "도착 정보 없음";
+    return train.arvlMsg2 || "\uB3C4\uCC29 \uC815\uBCF4 \uC5C6\uC74C";
   }
 
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
-  return `${minutes}분 ${remainingSeconds}초`;
+  return `${minutes}\uBD84 ${remainingSeconds}\uCD08`;
 }
 
 function getArrivalStatusText(arvlCd: string): string | null {
   if (arvlCd === "0") {
-    return "당역 진입";
+    return "\uB2F9\uC5ED \uC9C4\uC785";
   }
 
   if (arvlCd === "1") {
-    return "당역 도착";
+    return "\uB2F9\uC5ED \uB3C4\uCC29";
   }
 
   return null;
 }
 
 export function getLineNameFromTrain(train: ArrivalTrain): string {
-  return SUBWAY_ID_TO_LINE_NAME[train.subwayId] ?? "";
-}
-
-function normalizeLineName(value: string): string {
-  return value.trim().replace(/\s+/g, "");
+  return getLineNameFromSubwayId(train.subwayId);
 }
 
 export function matchesFavorite(train: ArrivalTrain, favorite: Favorite): boolean {
