@@ -1,6 +1,8 @@
 import { NativeModules, PermissionsAndroid, Platform } from "react-native";
 
 import type { Favorite } from "../types/favorite";
+import { getFavoriteId, makeDisplayLabel } from "./search";
+import { getApiStationName } from "./stationNames";
 
 type SubwayPanelModule = {
   getFavoritesJson(): Promise<string | null>;
@@ -16,6 +18,27 @@ type NativeSnapshot = {
   favorites: Favorite[];
   currentFavoriteId: string | null;
 };
+
+type NativePanelFavoritePayload = Favorite & {
+  id: string;
+  apiStationName: string;
+  displayLabel: string;
+};
+
+function toNativePanelFavoritePayload(
+  favorites: Favorite[],
+): NativePanelFavoritePayload[] {
+  return favorites.map((favorite) => ({
+    ...favorite,
+    id: getFavoriteId(favorite),
+    apiStationName: getApiStationName(favorite.stationName),
+    displayLabel: makeDisplayLabel(
+      favorite.stationName,
+      favorite.lineName,
+      favorite.directionLabel,
+    ),
+  }));
+}
 
 async function ensureNotificationPermission(): Promise<boolean> {
   if (Platform.OS !== "android") {
@@ -72,7 +95,10 @@ export async function syncNativePanelState(
     return;
   }
 
-  await nativePanel.syncState(JSON.stringify(favorites), currentFavoriteId);
+  await nativePanel.syncState(
+    JSON.stringify(toNativePanelFavoritePayload(favorites)),
+    currentFavoriteId,
+  );
 
   if (favorites.length === 0) {
     await nativePanel.stopPanel();

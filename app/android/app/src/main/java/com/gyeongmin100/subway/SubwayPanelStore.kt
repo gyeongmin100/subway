@@ -122,13 +122,33 @@ object SubwayPanelStore {
     }
   }
 
+  private fun buildFavoriteId(
+    stationName: String,
+    lineName: String,
+    directionLabel: String,
+  ): String = "$stationName:$lineName:$directionLabel"
+
+  private fun buildDisplayLabel(
+    stationName: String,
+    lineName: String,
+    directionLabel: String,
+  ): String = "$stationName $lineName $directionLabel"
+
   private fun JSONObject.toFavoriteItem(): FavoriteItem =
-    FavoriteItem(
-      id = optString("id"),
-      stationName = optString("stationName"),
-      apiStationName = optString("apiStationName", optString("stationName")),
-      lineName = optString("lineName"),
-      directionLabel = optString("directionLabel"),
-      displayLabel = optString("displayLabel")
-    )
+    run {
+      val stationName = optString("stationName")
+      val lineName = optString("lineName")
+      val directionLabel = optString("directionLabel")
+      val fallbackId = buildFavoriteId(stationName, lineName, directionLabel)
+      val fallbackDisplayLabel = buildDisplayLabel(stationName, lineName, directionLabel)
+
+      FavoriteItem(
+        id = optString("id").ifBlank { fallbackId },
+        stationName = stationName,
+        apiStationName = optString("apiStationName", stationName).ifBlank { stationName },
+        lineName = lineName,
+        directionLabel = directionLabel,
+        displayLabel = optString("displayLabel").ifBlank { fallbackDisplayLabel }
+      )
+    }
 }
