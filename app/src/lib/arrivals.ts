@@ -1,4 +1,4 @@
-import { getLineNameFromSubwayId, normalizeDirectionLabel, normalizeLineName } from "../../../shared/subwayRules";
+import { getLineNameFromSubwayId, normalizeDirectionLabel, normalizeLineName } from "./subwayRules";
 import type { ArrivalTrain } from "../types/arrival";
 import type { Favorite } from "../types/favorite";
 

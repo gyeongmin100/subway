@@ -6,7 +6,7 @@ import {
   DIRECTION_LABELS,
   REALTIME_SUPPORTED_LINES,
   normalizeLineName,
-} from "../../../shared/subwayRules";
+} from "./subwayRules";
 
 const stationRows = stationMasterJson as StationMasterRow[];
 
