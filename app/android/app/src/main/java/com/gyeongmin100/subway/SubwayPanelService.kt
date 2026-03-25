@@ -46,6 +46,7 @@ class SubwayPanelService : Service() {
   private var favorites: List<FavoriteItem> = emptyList()
   private var currentFavorite: FavoriteItem? = null
   private var currentArrivals: List<ArrivalItem> = emptyList()
+  private var isRefreshingCurrentFavorite = false
   private val arrivalsByFavoriteId = mutableMapOf<String, List<ArrivalItem>>()
 
   private val ticker = object : Runnable {
@@ -154,10 +155,8 @@ class SubwayPanelService : Service() {
     currentFavorite = favorites.firstOrNull { it.id == currentFavoriteId }
       ?: favorites.firstOrNull()
 
-    currentArrivals = currentFavorite
-      ?.id
-      ?.let { arrivalsByFavoriteId[it].orEmpty() }
-      ?: emptyList()
+    currentArrivals = emptyList()
+    isRefreshingCurrentFavorite = currentFavorite != null
 
     if (currentFavorite != null && currentFavoriteId != currentFavorite?.id) {
       SubwayPanelStore.saveCurrentFavoriteId(this, currentFavorite?.id)
@@ -177,14 +176,17 @@ class SubwayPanelService : Service() {
     val nextIndex = (currentIndex + direction).mod(favorites.size)
     currentFavorite = favorites[nextIndex]
     SubwayPanelStore.saveCurrentFavoriteId(this, currentFavorite?.id)
-    currentArrivals = currentFavorite
-      ?.id
-      ?.let { arrivalsByFavoriteId[it].orEmpty() }
-      ?: emptyList()
+    currentArrivals = emptyList()
+    isRefreshingCurrentFavorite = true
   }
 
   private fun fetchLatestArrivals(force: Boolean = false) {
     val favorite = currentFavorite ?: return
+    if (force && currentFavorite?.id == favorite.id) {
+      isRefreshingCurrentFavorite = true
+      currentArrivals = emptyList()
+      renderNotification()
+    }
     if (fetchInFlight.get()) {
       if (force) {
         queuedForceRefresh = true
@@ -223,6 +225,7 @@ class SubwayPanelService : Service() {
           SubwayPanelStore.saveArrivalSnapshots(this, arrivalsByFavoriteId)
 
           if (currentFavorite?.id == requestFavoriteId) {
+            isRefreshingCurrentFavorite = false
             currentArrivals = reconciled
             renderNotification()
           }
@@ -230,6 +233,7 @@ class SubwayPanelService : Service() {
       } catch (_: Exception) {
         mainHandler.post {
           if (currentFavorite?.id == requestFavoriteId) {
+            isRefreshingCurrentFavorite = false
             renderNotification()
           }
         }
@@ -364,6 +368,8 @@ class SubwayPanelService : Service() {
 
     val lines = if (favorite == null) {
       listOf("앱에서 즐겨찾기를 추가해 주세요")
+    } else if (isRefreshingCurrentFavorite) {
+      listOf("도착 정보 확인 중")
     } else if (currentArrivals.isEmpty()) {
       listOf("도착 정보 없음")
     } else {
