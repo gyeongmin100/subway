@@ -133,7 +133,6 @@ class SubwayPanelService : Service() {
     mainHandler.removeCallbacks(ticker)
     mainHandler.removeCallbacks(refresher)
     mainHandler.post(ticker)
-    mainHandler.post(refresher)
   }
 
   private fun stopServiceInternal() {

@@ -106,6 +106,7 @@ export default function App() {
         <StatusBar style="dark" />
         {screen.name === "search" ? (
           <SearchScreen
+            currentFavoriteId={currentFavoriteId}
             favorites={favorites}
             onAddFavorite={handleAddFavorite}
             onOpenFavorites={() => setScreen({ name: "favorites" })}

@@ -22,11 +22,36 @@ import {
 import type { Favorite } from "../types/favorite";
 
 type Props = {
+  currentFavoriteId?: string | null;
   favorites: Favorite[];
   onAddFavorite: (favorite: Favorite) => AddFavoriteResult;
   onOpenFavorites: () => void;
   onSelectCurrentFavorite: (favoriteId: string) => void;
 };
+
+const LINE_COLORS: Record<string, string> = {
+  "1호선": "#0052A4",
+  "2호선": "#009D3E",
+  "3호선": "#EF7C1C",
+  "4호선": "#00A2D1",
+  "5호선": "#8B50A4",
+  "6호선": "#C55C1D",
+  "7호선": "#54640D",
+  "8호선": "#EA545D",
+  "9호선": "#BDB092",
+  "경의중앙선": "#77C4A3",
+  "수인분당선": "#F5A200",
+  "신분당선": "#D4003B",
+  "공항철도": "#0090D2",
+  "경춘선": "#0C8E72",
+  "우이신설선": "#B0CE18",
+  "서해선": "#8FC31F",
+  "GTX-A": "#9B3B8C",
+};
+
+function getLineColor(lineName: string): string {
+  return LINE_COLORS[lineName] ?? "#4b5563";
+}
 
 function Chip({ label }: { label: string }) {
   return (
@@ -45,6 +70,7 @@ function getFavoriteErrorMessage(reason: AddFavoriteFailureReason): string {
 }
 
 export function SearchScreen({
+  currentFavoriteId,
   favorites,
   onAddFavorite,
   onOpenFavorites,
@@ -69,6 +95,7 @@ export function SearchScreen({
       </View>
 
       <View style={styles.searchBox}>
+        <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
           autoCapitalize="none"
           onChangeText={setQuery}
@@ -79,7 +106,7 @@ export function SearchScreen({
         />
         {query.length > 0 ? (
           <Pressable onPress={() => setQuery("")} style={styles.clearButton}>
-            <Text style={styles.clearLabel}>X</Text>
+            <Text style={styles.clearLabel}>✕</Text>
           </Pressable>
         ) : null}
       </View>
@@ -87,24 +114,28 @@ export function SearchScreen({
       <View style={styles.favoriteStrip}>
         <Text style={styles.sectionTitle}>현재 즐겨찾기</Text>
         {favorites.length === 0 ? (
-          <Text style={styles.emptyText}>즐겨찾기를 추가해보세요</Text>
+          <Text style={styles.emptyText}>검색으로 즐겨찾기를 추가해보세요</Text>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {favorites.map((favorite) => (
-              <Pressable
-                key={getFavoriteId(favorite)}
-                onPress={() => onSelectCurrentFavorite(getFavoriteId(favorite))}
-                style={styles.favoriteChip}
-              >
-                <Text style={styles.favoriteChipText}>
-                  {makeDisplayLabel(
-                    favorite.stationName,
-                    favorite.lineName,
-                    favorite.directionLabel,
-                  )}
-                </Text>
-              </Pressable>
-            ))}
+            {favorites.map((favorite) => {
+              const favId = getFavoriteId(favorite);
+              const isSelected = favId === currentFavoriteId;
+              return (
+                <Pressable
+                  key={favId}
+                  onPress={() => onSelectCurrentFavorite(favId)}
+                  style={[styles.favoriteChip, isSelected ? styles.favoriteChipSelected : null]}
+                >
+                  <Text style={[styles.favoriteChipText, isSelected ? styles.favoriteChipTextSelected : null]}>
+                    {makeDisplayLabel(
+                      favorite.stationName,
+                      favorite.lineName,
+                      favorite.directionLabel,
+                    )}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </ScrollView>
         )}
       </View>
@@ -112,10 +143,10 @@ export function SearchScreen({
       <Text style={styles.sectionTitle}>검색 결과</Text>
       {query.trim().length < 2 ? (
         <Text style={styles.helperText}>
-          2글자 이상 입력하면 검색이 시작됩니다.
+          2글자 이상 입력하면 결과가 표시됩니다.
         </Text>
       ) : results.length === 0 ? (
-        <Text style={styles.helperText}>검색 결과가 없습니다.</Text>
+        <Text style={styles.helperText}>일치하는 역을 찾을 수 없습니다.</Text>
       ) : (
         <ScrollView contentContainerStyle={styles.resultList}>
           {results.map((result) => (
@@ -151,10 +182,13 @@ export function SearchScreen({
               }}
               style={styles.resultCard}
             >
-              <Text style={styles.stationName}>{result.stationName}</Text>
-              <View style={styles.badgeRow}>
-                <Chip label={result.lineName} />
-                <Chip label={result.directionLabel} />
+              <View style={[styles.resultCardAccent, { backgroundColor: getLineColor(result.lineName) }]} />
+              <View style={styles.resultCardContent}>
+                <Text style={styles.stationName}>{result.stationName}</Text>
+                <View style={styles.badgeRow}>
+                  <Chip label={result.lineName} />
+                  <Chip label={result.directionLabel} />
+                </View>
               </View>
             </Pressable>
           ))}
@@ -169,7 +203,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#efe8d8",
     paddingHorizontal: 20,
-    paddingTop: 24,
   },
   header: {
     flexDirection: "row",
@@ -212,7 +245,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 8,
+  },
+  searchIcon: {
+    fontSize: 16,
   },
   input: {
     flex: 1,
@@ -250,10 +286,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     backgroundColor: "#fef3c7",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  favoriteChipSelected: {
+    borderColor: "#111827",
+    backgroundColor: "#fde68a",
   },
   favoriteChipText: {
     color: "#92400e",
     fontWeight: "700",
+  },
+  favoriteChipTextSelected: {
+    color: "#111827",
   },
   helperText: {
     color: "#6b7280",
@@ -268,6 +313,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#fffdf6",
     borderWidth: 1,
     borderColor: "#d9ccb3",
+    flexDirection: "row",
+    overflow: "hidden",
+  },
+  resultCardAccent: {
+    width: 5,
+    borderTopLeftRadius: 24,
+    borderBottomLeftRadius: 24,
+  },
+  resultCardContent: {
+    flex: 1,
     paddingHorizontal: 18,
     paddingVertical: 18,
   },

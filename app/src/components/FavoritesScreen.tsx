@@ -32,6 +32,7 @@ export function FavoritesScreen({
 
       {favorites.length === 0 ? (
         <View style={styles.emptyState}>
+          <Text style={styles.emptyEmoji}>🚇</Text>
           <Text style={styles.emptyTitle}>즐겨찾기가 없습니다</Text>
           <Text style={styles.emptyText}>검색 화면에서 최대 3개까지 추가할 수 있습니다.</Text>
         </View>
@@ -44,7 +45,7 @@ export function FavoritesScreen({
             return (
               <View
                 key={favoriteId}
-                style={[styles.row, selected ? styles.rowSelected : null]}
+                style={[styles.row, selected ? styles.rowSelected : null, selected ? styles.rowSelectedAccent : null]}
               >
                 <Pressable
                   onPress={() => onSelectCurrentFavorite(favoriteId)}
@@ -68,7 +69,7 @@ export function FavoritesScreen({
                         index === 0 ? styles.disabledButton : null,
                       ]}
                     >
-                      <Text style={styles.moveLabel}>위</Text>
+                      <Text style={styles.moveLabel}>↑</Text>
                     </Pressable>
                     <Pressable
                       disabled={index === favorites.length - 1}
@@ -78,7 +79,7 @@ export function FavoritesScreen({
                         index === favorites.length - 1 ? styles.disabledButton : null,
                       ]}
                     >
-                      <Text style={styles.moveLabel}>아래</Text>
+                      <Text style={styles.moveLabel}>↓</Text>
                     </Pressable>
                   </View>
 
@@ -131,6 +132,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
+  emptyEmoji: {
+    fontSize: 48,
+  },
   emptyTitle: {
     fontSize: 22,
     fontWeight: "800",
@@ -158,6 +162,10 @@ const styles = StyleSheet.create({
   rowSelected: {
     borderColor: "#111827",
     backgroundColor: "#f8f3e6",
+  },
+  rowSelectedAccent: {
+    borderLeftWidth: 3,
+    borderLeftColor: "#111827",
   },
   rowBody: {
     flex: 1,
