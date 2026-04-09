@@ -34,7 +34,7 @@ export function FavoritesScreen({
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🚇</Text>
           <Text style={styles.emptyTitle}>즐겨찾기가 없습니다</Text>
-          <Text style={styles.emptyText}>검색 화면에서 최대 3개까지 추가할 수 있습니다.</Text>
+          <Text style={styles.emptyText}>검색 화면에서 최대 5개까지 추가할 수 있습니다.</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.listContent}>

@@ -21,6 +21,7 @@ import java.net.URLEncoder
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.floor
+import kotlin.math.roundToInt
 
 data class ArrivalItem(
   val subwayId: String,
@@ -43,6 +44,8 @@ class SubwayPanelService : Service() {
   @Volatile
   private var queuedForceRefresh = false
 
+  private var refreshCallsRemaining = 0
+
   private var favorites: List<FavoriteItem> = emptyList()
   private var currentFavorite: FavoriteItem? = null
   private var currentArrivals: List<ArrivalItem> = emptyList()
@@ -58,8 +61,12 @@ class SubwayPanelService : Service() {
 
   private val refresher = object : Runnable {
     override fun run() {
-      fetchLatestArrivals()
-      mainHandler.postDelayed(this, REFRESH_INTERVAL_MS)
+      if (refreshCallsRemaining <= 0) return
+      refreshCallsRemaining--
+      fetchLatestArrivals(force = true)
+      if (refreshCallsRemaining > 0) {
+        mainHandler.postDelayed(this, REFRESH_INTERVAL_MS)
+      }
     }
   }
 
@@ -102,7 +109,9 @@ class SubwayPanelService : Service() {
       ACTION_REFRESH -> {
         restoreState()
         startForegroundIfNeeded()
-        fetchLatestArrivals(force = true)
+        refreshCallsRemaining = 5
+        mainHandler.removeCallbacks(refresher)
+        mainHandler.post(refresher)
       }
     }
 
@@ -130,6 +139,7 @@ class SubwayPanelService : Service() {
   }
 
   private fun scheduleLoops() {
+    refreshCallsRemaining = 0
     mainHandler.removeCallbacks(ticker)
     mainHandler.removeCallbacks(refresher)
     mainHandler.post(ticker)
@@ -469,9 +479,7 @@ class SubwayPanelService : Service() {
       return arrival.arvlMsg2.ifBlank { "도착 정보 없음" }
     }
 
-    val minutes = displaySeconds / 60
-    val seconds = displaySeconds % 60
-    return "${minutes}분 ${seconds}초"
+    return "${(displaySeconds / 60.0).roundToInt()}분"
   }
 
   private fun shouldUseArrivalMessage(barvlDt: Int, message: String): Boolean =

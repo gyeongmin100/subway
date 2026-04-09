@@ -66,7 +66,7 @@ function getFavoriteErrorMessage(reason: AddFavoriteFailureReason): string {
     return "이미 추가된 즐겨찾기입니다.";
   }
 
-  return "즐겨찾기는 최대 3개까지 가능합니다.";
+  return "즐겨찾기는 최대 5개까지 가능합니다.";
 }
 
 export function SearchScreen({
