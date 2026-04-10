@@ -6,24 +6,33 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OFFICIAL_CSV_PATH = ROOT / "실시간도착_역정보(20260108).csv"
+
+
+def resolve_official_csv_path() -> Path:
+    matches = sorted(ROOT.glob("실시간도착_역정보*.csv"))
+    if matches:
+        return matches[0]
+
+    raise FileNotFoundError(
+        "루트 디렉터리에 '실시간도착_역정보*.csv' 파일이 없습니다. "
+        "이 파일은 Git 추적 대상이 아니므로 로컬에만 두고 실행해야 합니다."
+    )
+
+
 def read_csv_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         return list(csv.DictReader(handle))
 
 
 def main() -> None:
-    official_rows = read_csv_rows(OFFICIAL_CSV_PATH)
+    official_rows = read_csv_rows(resolve_official_csv_path())
     if not official_rows:
         raise RuntimeError("Official CSV is empty.")
 
     official_columns = list(official_rows[0].keys())
     _, _, station_name_column, line_name_column = official_columns
 
-    official_station_names = {
-        row[station_name_column].strip()
-        for row in official_rows
-    }
+    official_station_names = {row[station_name_column].strip() for row in official_rows}
 
     station_master_rows: list[dict[str, object]] = []
     seen_pairs: set[tuple[str, str]] = set()

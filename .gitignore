@@ -2,19 +2,22 @@ workers/node_modules/
 workers/.wrangler/
 workers/.dev.vars
 app/dist-test/
-ArrivalCountdownExample.tsx
-android_foreground_service_strategy.md
-arrival-time.ts
-implementation_plan.md
-search_master_correction_table.csv
-search_master_design.md
-search_master_final.csv
-국토교통부_도시철도 전체노선_20241211.csv
-샘플정보.txt
-서울교통공사_노선별 지하철역 정보.csv
-서울교통공사_노선별 지하철역 정보.json
-세부계획서.md
-수도권_지하철역_이전역_다음역_마스터.csv
-실시간도착_역정보(20260108).xlsx
 app/src/data/destinationMaster.json
 app/src/data/searchMaster.json
+
+ArrivalCountdownExample.tsx
+arrival-time.ts
+implementation_plan.md
+
+/android_foreground_service_strategy.md
+/search_master_correction_table.csv
+/search_master_design.md
+/search_master_final.csv
+/세부계획서.md
+/서울교통공사_노선별 지하철역 정보.json
+
+/*.csv
+/*.xlsx
+/*.txt
+
+.gstack/
