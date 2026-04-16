@@ -21,6 +21,10 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "notification": {
+        "icon": "./assets/android-icon-monochrome.png",
+        "color": "#5bc8c8"
+      },
       "predictiveBackGestureEnabled": false,
       "package": "com.gyeongmin100.subway"
     },
