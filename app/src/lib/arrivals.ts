@@ -26,9 +26,7 @@ export function formatArrivalText(
     return train.arvlMsg2 || "\uB3C4\uCC29 \uC815\uBCF4 \uC5C6\uC74C";
   }
 
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}\uBD84 ${remainingSeconds}\uCD08`;
+  return `${Math.round(seconds / 60)}\uBD84`;
 }
 
 function getArrivalStatusText(arvlCd: string): string | null {

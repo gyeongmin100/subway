@@ -102,7 +102,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#f0fafa" }}>
         <StatusBar style="dark" />
         {screen.name === "search" ? (
           <SearchScreen

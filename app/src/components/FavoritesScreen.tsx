@@ -1,4 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import { getFavoriteId, makeDisplayLabel } from "../lib/search";
 import type { Favorite } from "../types/favorite";
@@ -32,9 +33,9 @@ export function FavoritesScreen({
 
       {favorites.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyEmoji}>🚇</Text>
+          <Ionicons name="subway-outline" size={48} color="#5bc8c8" />
           <Text style={styles.emptyTitle}>즐겨찾기가 없습니다</Text>
-          <Text style={styles.emptyText}>검색 화면에서 최대 5개까지 추가할 수 있습니다.</Text>
+          <Text style={styles.emptyText}>검색 화면에서 즐겨찾기를 추가할 수 있습니다.</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.listContent}>
@@ -69,7 +70,7 @@ export function FavoritesScreen({
                         index === 0 ? styles.disabledButton : null,
                       ]}
                     >
-                      <Text style={styles.moveLabel}>↑</Text>
+                      <Ionicons name="chevron-up" size={16} color="#1a3a3a" />
                     </Pressable>
                     <Pressable
                       disabled={index === favorites.length - 1}
@@ -79,7 +80,7 @@ export function FavoritesScreen({
                         index === favorites.length - 1 ? styles.disabledButton : null,
                       ]}
                     >
-                      <Text style={styles.moveLabel}>↓</Text>
+                      <Ionicons name="chevron-down" size={16} color="#1a3a3a" />
                     </Pressable>
                   </View>
 
@@ -99,7 +100,7 @@ export function FavoritesScreen({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f3efe4",
+    backgroundColor: "#f0fafa",
     paddingHorizontal: 20,
     paddingTop: 24,
   },
@@ -112,16 +113,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: "#e5dcc8",
+    backgroundColor: "#d0f0f0",
   },
   backLabel: {
     fontWeight: "700",
-    color: "#1f2937",
+    color: "#1a3a3a",
   },
   title: {
     fontSize: 24,
-    fontWeight: "800",
-    color: "#111827",
+    fontWeight: "700",
+    color: "#1a3a3a",
   },
   placeholder: {
     width: 42,
@@ -132,52 +133,54 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-  emptyEmoji: {
-    fontSize: 48,
-  },
   emptyTitle: {
     fontSize: 22,
     fontWeight: "800",
-    color: "#111827",
+    color: "#1a3a3a",
   },
   emptyText: {
     textAlign: "center",
-    color: "#6b7280",
+    color: "#5a8a8a",
   },
   listContent: {
     paddingBottom: 24,
   },
   row: {
     marginBottom: 12,
-    borderRadius: 20,
-    backgroundColor: "#fffdf7",
+    borderRadius: 28,
+    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#e5dcc8",
+    borderColor: "#b2e0e0",
     padding: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
+    elevation: 3,
+    shadowColor: "#5bc8c8",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
   },
   rowSelected: {
-    borderColor: "#111827",
-    backgroundColor: "#f8f3e6",
+    borderColor: "#2d7a7a",
+    backgroundColor: "#e6f7f7",
   },
   rowSelectedAccent: {
     borderLeftWidth: 3,
-    borderLeftColor: "#111827",
+    borderLeftColor: "#2d7a7a",
   },
   rowBody: {
     flex: 1,
   },
   rowTitle: {
     fontWeight: "700",
-    color: "#111827",
+    color: "#1a3a3a",
     fontSize: 16,
   },
   rowMeta: {
     marginTop: 8,
-    color: "#6b7280",
+    color: "#5a8a8a",
   },
   rowActions: {
     flexDirection: "row",
@@ -189,16 +192,12 @@ const styles = StyleSheet.create({
   },
   moveButton: {
     borderRadius: 999,
-    backgroundColor: "#efe6d5",
+    backgroundColor: "#d0f0f0",
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   disabledButton: {
     opacity: 0.4,
-  },
-  moveLabel: {
-    color: "#1f2937",
-    fontWeight: "700",
   },
   deleteButton: {
     borderRadius: 999,

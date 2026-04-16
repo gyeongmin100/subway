@@ -8,9 +8,9 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import type {
-  AddFavoriteFailureReason,
   AddFavoriteResult,
 } from "../lib/favorites";
 import {
@@ -61,12 +61,8 @@ function Chip({ label }: { label: string }) {
   );
 }
 
-function getFavoriteErrorMessage(reason: AddFavoriteFailureReason): string {
-  if (reason === "duplicate") {
-    return "이미 추가된 즐겨찾기입니다.";
-  }
-
-  return "즐겨찾기는 최대 5개까지 가능합니다.";
+function getFavoriteErrorMessage(): string {
+  return "이미 추가된 즐겨찾기입니다.";
 }
 
 export function SearchScreen({
@@ -83,7 +79,6 @@ export function SearchScreen({
     <View style={styles.screen}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.eyebrow}>SEARCH</Text>
           <Text style={styles.title}>역 검색</Text>
         </View>
 
@@ -95,7 +90,7 @@ export function SearchScreen({
       </View>
 
       <View style={styles.searchBox}>
-        <Text style={styles.searchIcon}>🔍</Text>
+        <Ionicons name="search" size={18} color="#5a8a8a" />
         <TextInput
           autoCapitalize="none"
           onChangeText={setQuery}
@@ -106,7 +101,7 @@ export function SearchScreen({
         />
         {query.length > 0 ? (
           <Pressable onPress={() => setQuery("")} style={styles.clearButton}>
-            <Text style={styles.clearLabel}>✕</Text>
+            <Ionicons name="close" size={16} color="#5a8a8a" />
           </Pressable>
         ) : null}
       </View>
@@ -172,7 +167,7 @@ export function SearchScreen({
                         if (!addResult.ok) {
                           Alert.alert(
                             "추가 실패",
-                            getFavoriteErrorMessage(addResult.reason),
+                            getFavoriteErrorMessage(),
                           );
                         }
                       },
@@ -194,6 +189,10 @@ export function SearchScreen({
           ))}
         </ScrollView>
       )}
+
+      <View style={styles.disclaimer}>
+        <Text style={styles.disclaimerText}>도착 정보는 실제와 다를 수 있습니다.</Text>
+      </View>
     </View>
   );
 }
@@ -201,8 +200,9 @@ export function SearchScreen({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#efe8d8",
+    backgroundColor: "#f0fafa",
     paddingHorizontal: 20,
+    paddingTop: 16,
   },
   header: {
     flexDirection: "row",
@@ -210,16 +210,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  eyebrow: {
-    fontSize: 12,
-    color: "#6b7280",
-    letterSpacing: 2,
-  },
   title: {
     marginTop: 6,
     fontSize: 32,
-    fontWeight: "800",
-    color: "#111827",
+    fontWeight: "700",
+    color: "#1a3a3a",
   },
   headerActions: {
     flexDirection: "row",
@@ -227,9 +222,9 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     borderRadius: 999,
-    backgroundColor: "#111827",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    backgroundColor: "#5bc8c8",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
   },
   primaryLabel: {
     color: "#fff",
@@ -238,22 +233,19 @@ const styles = StyleSheet.create({
   searchBox: {
     marginTop: 18,
     borderRadius: 24,
-    backgroundColor: "#fffdf6",
+    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#d9ccb3",
+    borderColor: "#b2e0e0",
     paddingHorizontal: 16,
     paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-  searchIcon: {
-    fontSize: 16,
-  },
   input: {
     flex: 1,
     fontSize: 18,
-    color: "#111827",
+    color: "#1a3a3a",
   },
   clearButton: {
     width: 30,
@@ -261,11 +253,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#ece3d0",
-  },
-  clearLabel: {
-    fontWeight: "700",
-    color: "#4b5563",
+    backgroundColor: "#d0f0f0",
   },
   favoriteStrip: {
     marginTop: 22,
@@ -273,11 +261,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#111827",
+    color: "#1a3a3a",
     marginBottom: 10,
   },
   emptyText: {
-    color: "#6b7280",
+    color: "#5a8a8a",
     fontSize: 14,
   },
   favoriteChip: {
@@ -285,23 +273,23 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: "#fef3c7",
+    backgroundColor: "#d0f0f0",
     borderWidth: 2,
     borderColor: "transparent",
   },
   favoriteChipSelected: {
-    borderColor: "#111827",
-    backgroundColor: "#fde68a",
+    borderColor: "#2d7a7a",
+    backgroundColor: "#a8e8e8",
   },
   favoriteChipText: {
-    color: "#92400e",
+    color: "#1a6b6b",
     fontWeight: "700",
   },
   favoriteChipTextSelected: {
-    color: "#111827",
+    color: "#1a3a3a",
   },
   helperText: {
-    color: "#6b7280",
+    color: "#5a8a8a",
     fontSize: 14,
   },
   resultList: {
@@ -309,17 +297,22 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   resultCard: {
-    borderRadius: 24,
-    backgroundColor: "#fffdf6",
+    borderRadius: 28,
+    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#d9ccb3",
+    borderColor: "#b2e0e0",
     flexDirection: "row",
     overflow: "hidden",
+    elevation: 3,
+    shadowColor: "#5bc8c8",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
   },
   resultCardAccent: {
     width: 5,
-    borderTopLeftRadius: 24,
-    borderBottomLeftRadius: 24,
+    borderTopLeftRadius: 28,
+    borderBottomLeftRadius: 28,
   },
   resultCardContent: {
     flex: 1,
@@ -329,7 +322,7 @@ const styles = StyleSheet.create({
   stationName: {
     fontSize: 22,
     fontWeight: "800",
-    color: "#111827",
+    color: "#1a3a3a",
   },
   badgeRow: {
     flexDirection: "row",
@@ -338,7 +331,7 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderRadius: 999,
-    backgroundColor: "#1f2937",
+    backgroundColor: "#2d7a7a",
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
@@ -346,5 +339,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
     fontSize: 13,
+  },
+  disclaimer: {
+    alignSelf: "center",
+    backgroundColor: "#e6f7f7",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  disclaimerText: {
+    fontSize: 11,
+    color: "#9ca3af",
+    textAlign: "center",
   },
 });

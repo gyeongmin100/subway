@@ -1,9 +1,7 @@
 import type { Favorite } from "../types/favorite";
 import { getFavoriteId } from "./search";
 
-export const MAX_FAVORITES = 3;
-
-export type AddFavoriteFailureReason = "duplicate" | "limit_exceeded";
+export type AddFavoriteFailureReason = "duplicate";
 
 export type AddFavoriteResult =
   | {
@@ -24,10 +22,6 @@ export function addFavorite(
 
   if (favorites.some((item) => getFavoriteId(item) === favoriteId)) {
     return { ok: false, reason: "duplicate" };
-  }
-
-  if (favorites.length >= MAX_FAVORITES) {
-    return { ok: false, reason: "limit_exceeded" };
   }
 
   return {
