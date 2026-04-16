@@ -62,6 +62,8 @@ object SubwayPanelStore {
             .put("arvlMsg2", arrival.arvlMsg2)
             .put("arvlCd", arrival.arvlCd)
             .put("lineName", arrival.lineName)
+            .put("ordkey", arrival.ordkey)
+            .put("lstcarAt", arrival.lstcarAt)
         )
       }
       root.put(favoriteId, array)
@@ -100,7 +102,9 @@ object SubwayPanelStore {
                   btrainNo = item.optString("btrainNo"),
                   arvlMsg2 = item.optString("arvlMsg2"),
                   arvlCd = item.optString("arvlCd"),
-                  lineName = item.optString("lineName")
+                  lineName = item.optString("lineName"),
+                  ordkey = item.optString("ordkey"),
+                  lstcarAt = item.optString("lstcarAt", "0")
                 )
               )
             }

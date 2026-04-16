@@ -49,6 +49,7 @@ type SeoulArrivalApiRow = {
   arvlCd?: string;
   ordkey?: string;
   recptnDt?: string;
+  lstcarAt?: string;
 };
 
 type ArrivalTrain = {
@@ -64,6 +65,7 @@ type ArrivalTrain = {
   arvlCd: string;
   ordkey: string;
   recptnDt: string;
+  lstcarAt: string;
   apiObservedAtMs: number;
   lineName: string;
 };
@@ -274,6 +276,7 @@ function parseArrivalRow(row: SeoulArrivalApiRow): ArrivalTrain {
     arvlCd: row.arvlCd ?? "",
     ordkey: row.ordkey ?? "",
     recptnDt: row.recptnDt ?? "",
+    lstcarAt: row.lstcarAt ?? "0",
     apiObservedAtMs: parseSeoulDateTimeToMs(row.recptnDt ?? ""),
     lineName: getLineNameFromSubwayId(row.subwayId ?? ""),
   };

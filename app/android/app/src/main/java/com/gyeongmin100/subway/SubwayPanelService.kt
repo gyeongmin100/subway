@@ -33,6 +33,8 @@ data class ArrivalItem(
   val btrainNo: String,
   val arvlMsg2: String,
   val arvlCd: String,
+  val ordkey: String,
+  val lstcarAt: String,
   val lineName: String
 )
 
@@ -354,6 +356,8 @@ class SubwayPanelService : Service() {
               btrainNo = item.optString("btrainNo"),
               arvlMsg2 = item.optString("arvlMsg2"),
               arvlCd = item.optString("arvlCd"),
+              ordkey = item.optString("ordkey"),
+              lstcarAt = item.optString("lstcarAt", "0"),
               lineName = item.optString("lineName"),
             ),
           )
@@ -525,7 +529,7 @@ class SubwayPanelService : Service() {
   }
 
   private fun ArrivalItem.ordKeyValue(): String =
-    "${this.expectedArrivalAtMs.toString().padStart(16, '0')}:${this.btrainNo}:${this.trainLineNm}"
+    this.ordkey.ifBlank { "${this.expectedArrivalAtMs.toString().padStart(16, '0')}:${this.btrainNo}" }
 
   private fun ArrivalItem.identityKey(): String =
     "${this.btrainNo}:${this.subwayId}:${this.updnLine.trim()}"
