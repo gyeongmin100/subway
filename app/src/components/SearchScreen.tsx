@@ -136,59 +136,61 @@ export function SearchScreen({
       </View>
 
       <Text style={styles.sectionTitle}>검색 결과</Text>
-      {query.trim().length < 2 ? (
-        <Text style={styles.helperText}>
-          2글자 이상 입력하면 결과가 표시됩니다.
-        </Text>
-      ) : results.length === 0 ? (
-        <Text style={styles.helperText}>일치하는 역을 찾을 수 없습니다.</Text>
-      ) : (
-        <ScrollView contentContainerStyle={styles.resultList}>
-          {results.map((result) => (
-            <Pressable
-              key={getFavoriteId(result)}
-              onPress={() => {
-                const candidate = favoriteFromSearchResult(result);
-                const displayLabel = makeDisplayLabel(
-                  result.stationName,
-                  result.lineName,
-                  result.directionLabel,
-                );
+      <View style={styles.resultArea}>
+        {query.trim().length < 2 ? (
+          <Text style={styles.helperText}>
+            2글자 이상 입력하면 결과가 표시됩니다.
+          </Text>
+        ) : results.length === 0 ? (
+          <Text style={styles.helperText}>일치하는 역을 찾을 수 없습니다.</Text>
+        ) : (
+          <ScrollView contentContainerStyle={styles.resultList}>
+            {results.map((result) => (
+              <Pressable
+                key={getFavoriteId(result)}
+                onPress={() => {
+                  const candidate = favoriteFromSearchResult(result);
+                  const displayLabel = makeDisplayLabel(
+                    result.stationName,
+                    result.lineName,
+                    result.directionLabel,
+                  );
 
-                Alert.alert(
-                  "즐겨찾기 추가",
-                  `${displayLabel}을 즐겨찾기에 추가할까요?`,
-                  [
-                    { text: "취소", style: "cancel" },
-                    {
-                      text: "추가",
-                      onPress: () => {
-                        const addResult = onAddFavorite(candidate);
-                        if (!addResult.ok) {
-                          Alert.alert(
-                            "추가 실패",
-                            getFavoriteErrorMessage(),
-                          );
-                        }
+                  Alert.alert(
+                    "즐겨찾기 추가",
+                    `${displayLabel}을 즐겨찾기에 추가할까요?`,
+                    [
+                      { text: "취소", style: "cancel" },
+                      {
+                        text: "추가",
+                        onPress: () => {
+                          const addResult = onAddFavorite(candidate);
+                          if (!addResult.ok) {
+                            Alert.alert(
+                              "추가 실패",
+                              getFavoriteErrorMessage(),
+                            );
+                          }
+                        },
                       },
-                    },
-                  ],
-                );
-              }}
-              style={styles.resultCard}
-            >
-              <View style={[styles.resultCardAccent, { backgroundColor: getLineColor(result.lineName) }]} />
-              <View style={styles.resultCardContent}>
-                <Text style={styles.stationName}>{result.stationName}</Text>
-                <View style={styles.badgeRow}>
-                  <Chip label={result.lineName} />
-                  <Chip label={result.directionLabel} />
+                    ],
+                  );
+                }}
+                style={styles.resultCard}
+              >
+                <View style={[styles.resultCardAccent, { backgroundColor: getLineColor(result.lineName) }]} />
+                <View style={styles.resultCardContent}>
+                  <Text style={styles.stationName}>{result.stationName}</Text>
+                  <View style={styles.badgeRow}>
+                    <Chip label={result.lineName} />
+                    <Chip label={result.directionLabel} />
+                  </View>
                 </View>
-              </View>
-            </Pressable>
-          ))}
-        </ScrollView>
-      )}
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+      </View>
 
       <View style={styles.disclaimer}>
         <Text style={styles.disclaimerText}>도착 정보는 실제와 다를 수 있습니다.</Text>
@@ -257,6 +259,7 @@ const styles = StyleSheet.create({
   },
   favoriteStrip: {
     marginTop: 22,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 16,
@@ -292,8 +295,11 @@ const styles = StyleSheet.create({
     color: "#5a8a8a",
     fontSize: 14,
   },
+  resultArea: {
+    flex: 1,
+  },
   resultList: {
-    paddingBottom: 24,
+    paddingBottom: 8,
     gap: 12,
   },
   resultCard: {
@@ -346,6 +352,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    marginTop: 8,
     marginBottom: 8,
   },
   disclaimerText: {

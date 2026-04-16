@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     color: "#5a8a8a",
   },
   listContent: {
-    paddingBottom: 24,
+    paddingBottom: 40,
   },
   row: {
     marginBottom: 12,
@@ -169,6 +169,7 @@ const styles = StyleSheet.create({
   rowSelectedAccent: {
     borderLeftWidth: 3,
     borderLeftColor: "#2d7a7a",
+    paddingLeft: 13,
   },
   rowBody: {
     flex: 1,

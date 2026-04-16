@@ -400,10 +400,25 @@ class SubwayPanelService : Service() {
       .setSilent(true)
       .setPriority(NotificationCompat.PRIORITY_LOW)
       .setCategory(NotificationCompat.CATEGORY_SERVICE)
+      .setContentIntent(createLaunchIntent())
       .addAction(0, "이전", createActionIntent(ACTION_PREVIOUS, REQUEST_PREVIOUS))
       .addAction(0, "새로고침", createActionIntent(ACTION_REFRESH, REQUEST_REFRESH))
       .addAction(0, "다음", createActionIntent(ACTION_NEXT, REQUEST_NEXT))
       .build()
+  }
+
+  private fun createLaunchIntent(): PendingIntent {
+    val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+      flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+    } ?: Intent(this, MainActivity::class.java).apply {
+      flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+    }
+    return PendingIntent.getActivity(
+      this,
+      REQUEST_LAUNCH,
+      intent,
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
   }
 
   private fun createActionIntent(action: String, requestCode: Int): PendingIntent {
@@ -536,6 +551,7 @@ class SubwayPanelService : Service() {
     private const val WORKER_BASE_URL = "https://subway.im100km.workers.dev"
     private const val ETA_STABLE_THRESHOLD_SEC = 3
 
+    private const val REQUEST_LAUNCH = 100
     private const val REQUEST_PREVIOUS = 101
     private const val REQUEST_REFRESH = 102
     private const val REQUEST_NEXT = 103
