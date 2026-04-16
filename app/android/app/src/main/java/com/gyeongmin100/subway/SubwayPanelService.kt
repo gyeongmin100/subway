@@ -387,7 +387,8 @@ class SubwayPanelService : Service() {
       listOf("도착 정보 없음")
     } else {
       currentArrivals.take(2).map { arrival ->
-        "${extractDestination(arrival.trainLineNm)} ${formatArrival(arrival)}"
+        val lastTrainPrefix = if (arrival.lstcarAt == "1") "[막차] " else ""
+        "$lastTrainPrefix${extractDestination(arrival.trainLineNm)} ${formatArrival(arrival)}"
       }
     }
 
