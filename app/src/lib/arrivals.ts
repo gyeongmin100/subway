@@ -23,11 +23,7 @@ export function formatArrivalText(
   }
 
   if (seconds <= 60) {
-    const msg = train.arvlMsg2 || "";
-    if (msg && !msg.includes("\uC804\uC5ED")) {
-      return msg;
-    }
-    return seconds > 0 ? `${seconds}\uCD08` : "\uACE7 \uB3C4\uCC29";
+    return train.arvlMsg2 || "\uB3C4\uCC29 \uC815\uBCF4 \uC5C6\uC74C";
   }
 
   return `${Math.round(seconds / 60)}\uBD84`;
