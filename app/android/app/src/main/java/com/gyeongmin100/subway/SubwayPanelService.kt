@@ -391,7 +391,7 @@ class SubwayPanelService : Service() {
     val firstLine = lines.firstOrNull() ?: "도착 정보 없음"
 
     return NotificationCompat.Builder(this, CHANNEL_ID)
-      .setSmallIcon(android.R.drawable.ic_dialog_info)
+      .setSmallIcon(R.drawable.notification_icon)
       .setContentTitle(title)
       .setContentText(firstLine)
       .setStyle(NotificationCompat.BigTextStyle().bigText(bigText))
