@@ -59,6 +59,7 @@ object SubwayPanelStore {
             .put("apiObservedAtMs", arrival.apiObservedAtMs)
             .put("expectedArrivalAtMs", arrival.expectedArrivalAtMs)
             .put("btrainNo", arrival.btrainNo)
+            .put("btrainSttus", arrival.btrainSttus)
             .put("arvlMsg2", arrival.arvlMsg2)
             .put("arvlCd", arrival.arvlCd)
             .put("lineName", arrival.lineName)
