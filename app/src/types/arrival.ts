@@ -11,6 +11,7 @@ export type ArrivalTrain = {
   arvlCd: string;
   ordkey: string;
   recptnDt: string;
+  lstcarAt: string;
   apiObservedAtMs: number;
   lineName: string;
 };

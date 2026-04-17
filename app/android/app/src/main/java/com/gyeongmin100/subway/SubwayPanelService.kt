@@ -390,7 +390,12 @@ class SubwayPanelService : Service() {
     } else {
       currentArrivals.take(2).map { arrival ->
         val lastTrainPrefix = if (arrival.lstcarAt == "1") "[막차] " else ""
-        val expressPrefix = if (arrival.btrainSttus == "급행") "[급행] " else ""
+        val expressPrefix = when (arrival.btrainSttus.trim()) {
+          "급행" -> "[급행] "
+          "ITX" -> "[ITX] "
+          "특급" -> "[특급] "
+          else -> ""
+        }
         "$lastTrainPrefix$expressPrefix${extractDestination(arrival.trainLineNm)} ${formatArrival(arrival)}"
       }
     }
