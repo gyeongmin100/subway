@@ -35,6 +35,7 @@ data class ArrivalItem(
   val arvlCd: String,
   val ordkey: String,
   val lstcarAt: String,
+  val btrainSttus: String,
   val lineName: String
 )
 
@@ -358,6 +359,7 @@ class SubwayPanelService : Service() {
               arvlCd = item.optString("arvlCd"),
               ordkey = item.optString("ordkey"),
               lstcarAt = item.optString("lstcarAt", "0"),
+              btrainSttus = item.optString("btrainSttus", ""),
               lineName = item.optString("lineName"),
             ),
           )
@@ -388,7 +390,8 @@ class SubwayPanelService : Service() {
     } else {
       currentArrivals.take(2).map { arrival ->
         val lastTrainPrefix = if (arrival.lstcarAt == "1") "[막차] " else ""
-        "$lastTrainPrefix${extractDestination(arrival.trainLineNm)} ${formatArrival(arrival)}"
+        val expressPrefix = if (arrival.btrainSttus == "급행") "[급행] " else ""
+        "$lastTrainPrefix$expressPrefix${extractDestination(arrival.trainLineNm)} ${formatArrival(arrival)}"
       }
     }
 
