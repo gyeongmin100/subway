@@ -100,6 +100,7 @@ object SubwayPanelStore {
                   apiObservedAtMs = item.optLong("apiObservedAtMs", 0L),
                   expectedArrivalAtMs = item.optLong("expectedArrivalAtMs", 0L),
                   btrainNo = item.optString("btrainNo"),
+                  btrainSttus = item.optString("btrainSttus", ""),
                   arvlMsg2 = item.optString("arvlMsg2"),
                   arvlCd = item.optString("arvlCd"),
                   lineName = item.optString("lineName"),
