@@ -45,7 +45,7 @@ class SubwayPanelService : Service() {
   private val fetchInFlight = AtomicBoolean(false)
 
   @Volatile
-  private var queuedForceRefresh = false
+  private var restartRefreshLoopAfterFetch = false
 
   private var refreshCallsRemaining = 0
 
@@ -59,9 +59,8 @@ class SubwayPanelService : Service() {
     override fun run() {
       if (refreshCallsRemaining <= 0) return
       refreshCallsRemaining--
-      fetchLatestArrivals(force = true)
-      if (refreshCallsRemaining > 0) {
-        mainHandler.postDelayed(this, REFRESH_INTERVAL_MS)
+      if (!fetchLatestArrivals(force = true)) {
+        continueRefreshLoopAfterFetch()
       }
     }
   }
@@ -82,41 +81,53 @@ class SubwayPanelService : Service() {
           return START_NOT_STICKY
         }
         startForeground(NOTIFICATION_ID, buildNotification())
-        cancelRefreshLoop()
-        fetchLatestArrivals(force = true)
+        startRefreshLoop()
       }
 
       ACTION_STOP -> stopServiceInternal()
 
       ACTION_PREVIOUS -> {
         restoreState()
+        if (favorites.isEmpty()) {
+          stopServiceInternal()
+          return START_NOT_STICKY
+        }
         moveCurrentFavorite(-1)
         startForegroundIfNeeded()
-        fetchLatestArrivals(force = true)
+        startRefreshLoop()
       }
 
       ACTION_NEXT -> {
         restoreState()
+        if (favorites.isEmpty()) {
+          stopServiceInternal()
+          return START_NOT_STICKY
+        }
         moveCurrentFavorite(1)
         startForegroundIfNeeded()
-        fetchLatestArrivals(force = true)
+        startRefreshLoop()
       }
 
       ACTION_REFRESH -> {
         restoreState()
+        if (favorites.isEmpty()) {
+          stopServiceInternal()
+          return START_NOT_STICKY
+        }
         startForegroundIfNeeded()
-        refreshCallsRemaining = 5
-        mainHandler.removeCallbacks(refresher)
-        mainHandler.post(refresher)
+        startRefreshLoop()
       }
     }
 
-    return START_STICKY
+    return START_NOT_STICKY
   }
 
   override fun onTaskRemoved(rootIntent: Intent?) {
-    startForegroundIfNeeded()
     super.onTaskRemoved(rootIntent)
+  }
+
+  override fun onTimeout(startId: Int, fgsType: Int) {
+    stopServiceKeepingNotification()
   }
 
   override fun onDestroy() {
@@ -134,14 +145,39 @@ class SubwayPanelService : Service() {
     cancelRefreshLoop()
   }
 
+  private fun startRefreshLoop() {
+    refreshCallsRemaining = REFRESH_CALL_COUNT
+    restartRefreshLoopAfterFetch = false
+    mainHandler.removeCallbacks(refresher)
+
+    if (fetchInFlight.get()) {
+      restartRefreshLoopAfterFetch = true
+      return
+    }
+
+    mainHandler.post(refresher)
+  }
+
   private fun cancelRefreshLoop() {
     refreshCallsRemaining = 0
+    restartRefreshLoopAfterFetch = false
     mainHandler.removeCallbacks(refresher)
   }
 
   private fun stopServiceInternal() {
     mainHandler.removeCallbacksAndMessages(null)
     stopForeground(STOP_FOREGROUND_REMOVE)
+    stopSelf()
+  }
+
+  private fun stopServiceKeepingNotification() {
+    mainHandler.removeCallbacksAndMessages(null)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      stopForeground(STOP_FOREGROUND_DETACH)
+    } else {
+      @Suppress("DEPRECATION")
+      stopForeground(false)
+    }
     stopSelf()
   }
 
@@ -183,24 +219,15 @@ class SubwayPanelService : Service() {
     isRefreshingCurrentFavorite = true
   }
 
-  private fun fetchLatestArrivals(force: Boolean = false) {
-    val favorite = currentFavorite ?: return
+  private fun fetchLatestArrivals(force: Boolean = false): Boolean {
+    val favorite = currentFavorite ?: return false
     if (force && currentFavorite?.id == favorite.id) {
       isRefreshingCurrentFavorite = true
       currentArrivals = emptyList()
       renderNotification()
     }
-    if (fetchInFlight.get()) {
-      if (force) {
-        queuedForceRefresh = true
-      }
-      return
-    }
     if (!fetchInFlight.compareAndSet(false, true)) {
-      if (force) {
-        queuedForceRefresh = true
-      }
-      return
+      return false
     }
 
     val requestFavoriteId = favorite.id
@@ -242,12 +269,27 @@ class SubwayPanelService : Service() {
         }
       } finally {
         fetchInFlight.set(false)
-        if (queuedForceRefresh) {
-          queuedForceRefresh = false
-          mainHandler.post { fetchLatestArrivals(force = true) }
-        }
+        mainHandler.post { continueRefreshLoopAfterFetch() }
       }
     }
+    return true
+  }
+
+  private fun continueRefreshLoopAfterFetch() {
+    if (restartRefreshLoopAfterFetch) {
+      restartRefreshLoopAfterFetch = false
+      if (refreshCallsRemaining > 0) {
+        mainHandler.post(refresher)
+        return
+      }
+    }
+
+    if (refreshCallsRemaining > 0) {
+      mainHandler.postDelayed(refresher, REFRESH_INTERVAL_MS)
+      return
+    }
+
+    stopServiceKeepingNotification()
   }
 
   private fun reconcileArrivals(
@@ -551,6 +593,7 @@ class SubwayPanelService : Service() {
 
     private const val CHANNEL_ID = "subway_panel_channel"
     private const val NOTIFICATION_ID = 41001
+    private const val REFRESH_CALL_COUNT = 5
     private const val REFRESH_INTERVAL_MS = 5_000L
     private const val WORKER_BASE_URL = "https://subway.im100km.workers.dev"
     private const val ETA_STABLE_THRESHOLD_SEC = 3
