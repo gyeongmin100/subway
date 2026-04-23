@@ -55,13 +55,6 @@ class SubwayPanelService : Service() {
   private var isRefreshingCurrentFavorite = false
   private val arrivalsByFavoriteId = mutableMapOf<String, List<ArrivalItem>>()
 
-  private val ticker = object : Runnable {
-    override fun run() {
-      renderNotification()
-      mainHandler.postDelayed(this, 1000L)
-    }
-  }
-
   private val refresher = object : Runnable {
     override fun run() {
       if (refreshCallsRemaining <= 0) return
@@ -89,7 +82,7 @@ class SubwayPanelService : Service() {
           return START_NOT_STICKY
         }
         startForeground(NOTIFICATION_ID, buildNotification())
-        scheduleLoops()
+        cancelRefreshLoop()
         fetchLatestArrivals(force = true)
       }
 
@@ -138,14 +131,12 @@ class SubwayPanelService : Service() {
     }
 
     startForeground(NOTIFICATION_ID, buildNotification())
-    scheduleLoops()
+    cancelRefreshLoop()
   }
 
-  private fun scheduleLoops() {
+  private fun cancelRefreshLoop() {
     refreshCallsRemaining = 0
-    mainHandler.removeCallbacks(ticker)
     mainHandler.removeCallbacks(refresher)
-    mainHandler.post(ticker)
   }
 
   private fun stopServiceInternal() {
