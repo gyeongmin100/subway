@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -438,6 +439,7 @@ class SubwayPanelService : Service() {
 
     return NotificationCompat.Builder(this, CHANNEL_ID)
       .setSmallIcon(R.drawable.notification_icon)
+      .setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.notification_large_icon))
       .setContentTitle(title)
       .setContentText(firstLine)
       .setStyle(NotificationCompat.BigTextStyle().bigText(bigText))
