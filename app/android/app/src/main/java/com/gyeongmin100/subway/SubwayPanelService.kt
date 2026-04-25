@@ -447,6 +447,7 @@ class SubwayPanelService : Service() {
       .setPriority(NotificationCompat.PRIORITY_LOW)
       .setCategory(NotificationCompat.CATEGORY_SERVICE)
       .setContentIntent(createLaunchIntent())
+      .setDeleteIntent(createActionIntent(ACTION_DISMISSED, REQUEST_DISMISSED))
       .addAction(0, "이전", createActionIntent(ACTION_PREVIOUS, REQUEST_PREVIOUS))
       .addAction(0, "새로고침", createActionIntent(ACTION_REFRESH, REQUEST_REFRESH))
       .addAction(0, "다음", createActionIntent(ACTION_NEXT, REQUEST_NEXT))
@@ -590,6 +591,7 @@ class SubwayPanelService : Service() {
     const val ACTION_PREVIOUS = "com.gyeongmin100.subway.action.PREVIOUS"
     const val ACTION_REFRESH = "com.gyeongmin100.subway.action.REFRESH"
     const val ACTION_NEXT = "com.gyeongmin100.subway.action.NEXT"
+    const val ACTION_DISMISSED = "com.gyeongmin100.subway.action.DISMISSED"
 
     private const val CHANNEL_ID = "subway_panel_channel"
     private const val NOTIFICATION_ID = 41001
@@ -602,6 +604,7 @@ class SubwayPanelService : Service() {
     private const val REQUEST_PREVIOUS = 101
     private const val REQUEST_REFRESH = 102
     private const val REQUEST_NEXT = 103
+    private const val REQUEST_DISMISSED = 104
 
     fun createIntent(context: Context, action: String): Intent =
       Intent(context, SubwayPanelService::class.java).apply {
