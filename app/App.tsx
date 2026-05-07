@@ -24,6 +24,7 @@ type Screen = { name: "search" } | { name: "favorites" };
 
 export default function App() {
   const [screen, setScreen] = React.useState<Screen>({ name: "search" });
+  const [searchQuery, setSearchQuery] = React.useState("");
   const [favorites, setFavorites] = React.useState<Favorite[]>([]);
   const [currentFavoriteId, setCurrentFavoriteId] = React.useState<string | null>(null);
   const [hydrated, setHydrated] = React.useState(false);
@@ -124,7 +125,9 @@ export default function App() {
           <SearchScreen
             currentFavoriteId={currentFavoriteId}
             favorites={favorites}
+            query={searchQuery}
             onAddFavorite={handleAddFavorite}
+            onChangeQuery={setSearchQuery}
             onOpenFavorites={() => setScreen({ name: "favorites" })}
             onSelectCurrentFavorite={setCurrentFavoriteId}
           />

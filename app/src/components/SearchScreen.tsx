@@ -24,7 +24,9 @@ import type { Favorite } from "../types/favorite";
 type Props = {
   currentFavoriteId?: string | null;
   favorites: Favorite[];
+  query: string;
   onAddFavorite: (favorite: Favorite) => AddFavoriteResult;
+  onChangeQuery: (query: string) => void;
   onOpenFavorites: () => void;
   onSelectCurrentFavorite: (favoriteId: string) => void;
 };
@@ -68,11 +70,13 @@ function getFavoriteErrorMessage(): string {
 export function SearchScreen({
   currentFavoriteId,
   favorites,
+  query,
   onAddFavorite,
+  onChangeQuery,
   onOpenFavorites,
   onSelectCurrentFavorite,
 }: Props) {
-  const [query, setQuery] = React.useState("");
+  const isSearching = query.trim().length >= 2;
   const results = searchStations(query);
 
   return (
@@ -93,100 +97,103 @@ export function SearchScreen({
         <Ionicons name="search" size={18} color="#5a8a8a" />
         <TextInput
           autoCapitalize="none"
-          onChangeText={setQuery}
+          onChangeText={onChangeQuery}
           placeholder="역 이름을 검색하세요"
           placeholderTextColor="#7a7a7a"
           style={styles.input}
           value={query}
         />
         {query.length > 0 ? (
-          <Pressable onPress={() => setQuery("")} style={styles.clearButton}>
+          <Pressable onPress={() => onChangeQuery("")} style={styles.clearButton}>
             <Ionicons name="close" size={16} color="#5a8a8a" />
           </Pressable>
         ) : null}
       </View>
 
-      <View style={styles.favoriteStrip}>
-        <Text style={styles.sectionTitle}>현재 즐겨찾기</Text>
-        {favorites.length === 0 ? (
-          <Text style={styles.emptyText}>검색으로 즐겨찾기를 추가해보세요</Text>
-        ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {favorites.map((favorite) => {
-              const favId = getFavoriteId(favorite);
-              const isSelected = favId === currentFavoriteId;
-              return (
-                <Pressable
-                  key={favId}
-                  onPress={() => onSelectCurrentFavorite(favId)}
-                  style={[styles.favoriteChip, isSelected ? styles.favoriteChipSelected : null]}
-                >
-                  <Text style={[styles.favoriteChipText, isSelected ? styles.favoriteChipTextSelected : null]}>
-                    {makeDisplayLabel(
-                      favorite.stationName,
-                      favorite.lineName,
-                      favorite.directionLabel,
-                    )}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        )}
-      </View>
+      {!isSearching ? (
+        <View style={styles.favoriteStrip}>
+          <Text style={styles.sectionTitle}>현재 즐겨찾기</Text>
+          {favorites.length === 0 ? (
+            <Text style={styles.emptyText}>검색으로 즐겨찾기를 추가해보세요</Text>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {favorites.map((favorite) => {
+                const favId = getFavoriteId(favorite);
+                const isSelected = favId === currentFavoriteId;
+                return (
+                  <Pressable
+                    key={favId}
+                    onPress={() => onSelectCurrentFavorite(favId)}
+                    style={[styles.favoriteChip, isSelected ? styles.favoriteChipSelected : null]}
+                  >
+                    <Text style={[styles.favoriteChipText, isSelected ? styles.favoriteChipTextSelected : null]}>
+                      {makeDisplayLabel(
+                        favorite.stationName,
+                        favorite.lineName,
+                        favorite.directionLabel,
+                      )}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
+        </View>
+      ) : null}
 
-      <Text style={styles.sectionTitle}>검색 결과</Text>
-      <View style={styles.resultArea}>
-        {query.trim().length < 2 ? null : results.length === 0 ? (
+      {isSearching ? (
+        <View style={styles.resultArea}>
+          {results.length === 0 ? (
           <Text style={styles.helperText}>일치하는 역을 찾을 수 없습니다.</Text>
-        ) : (
-          <ScrollView contentContainerStyle={styles.resultList}>
-            {results.map((result) => (
-              <Pressable
-                key={getFavoriteId(result)}
-                onPress={() => {
-                  const candidate = favoriteFromSearchResult(result);
-                  const displayLabel = makeDisplayLabel(
-                    result.stationName,
-                    result.lineName,
-                    result.directionLabel,
-                  );
+          ) : (
+            <ScrollView contentContainerStyle={styles.resultList}>
+              {results.map((result) => (
+                <Pressable
+                  key={getFavoriteId(result)}
+                  onPress={() => {
+                    const candidate = favoriteFromSearchResult(result);
+                    const displayLabel = makeDisplayLabel(
+                      result.stationName,
+                      result.lineName,
+                      result.directionLabel,
+                    );
 
-                  Alert.alert(
-                    "즐겨찾기 추가",
-                    `${displayLabel}을 즐겨찾기에 추가할까요?`,
-                    [
-                      { text: "취소", style: "cancel" },
-                      {
-                        text: "추가",
-                        onPress: () => {
-                          const addResult = onAddFavorite(candidate);
-                          if (!addResult.ok) {
-                            Alert.alert(
-                              "추가 실패",
-                              getFavoriteErrorMessage(),
-                            );
-                          }
+                    Alert.alert(
+                      "즐겨찾기 추가",
+                      `${displayLabel}을 즐겨찾기에 추가할까요?`,
+                      [
+                        { text: "취소", style: "cancel" },
+                        {
+                          text: "추가",
+                          onPress: () => {
+                            const addResult = onAddFavorite(candidate);
+                            if (!addResult.ok) {
+                              Alert.alert(
+                                "추가 실패",
+                                getFavoriteErrorMessage(),
+                              );
+                            }
+                          },
                         },
-                      },
-                    ],
-                  );
-                }}
-                style={styles.resultCard}
-              >
-                <View style={[styles.resultCardAccent, { backgroundColor: getLineColor(result.lineName) }]} />
-                <View style={styles.resultCardContent}>
-                  <Text style={styles.stationName}>{result.stationName}</Text>
-                  <View style={styles.badgeRow}>
-                    <Chip label={result.lineName} />
-                    <Chip label={result.directionLabel} />
+                      ],
+                    );
+                  }}
+                  style={styles.resultCard}
+                >
+                  <View style={[styles.resultCardAccent, { backgroundColor: getLineColor(result.lineName) }]} />
+                  <View style={styles.resultCardContent}>
+                    <Text style={styles.stationName}>{result.stationName}</Text>
+                    <View style={styles.badgeRow}>
+                      <Chip label={result.lineName} />
+                      <Chip label={result.directionLabel} />
+                    </View>
                   </View>
-                </View>
-              </Pressable>
-            ))}
-          </ScrollView>
-        )}
-      </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      ) : null}
 
       <View style={styles.disclaimer}>
         <Text style={styles.disclaimerText}>도착 정보는 실제와 다를 수 있습니다.</Text>
