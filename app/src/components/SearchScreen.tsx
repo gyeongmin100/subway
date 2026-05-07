@@ -137,11 +137,7 @@ export function SearchScreen({
 
       <Text style={styles.sectionTitle}>검색 결과</Text>
       <View style={styles.resultArea}>
-        {query.trim().length < 2 ? (
-          <Text style={styles.helperText}>
-            2글자 이상 입력하면 결과가 표시됩니다.
-          </Text>
-        ) : results.length === 0 ? (
+        {query.trim().length < 2 ? null : results.length === 0 ? (
           <Text style={styles.helperText}>일치하는 역을 찾을 수 없습니다.</Text>
         ) : (
           <ScrollView contentContainerStyle={styles.resultList}>

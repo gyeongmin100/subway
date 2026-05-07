@@ -1,4 +1,5 @@
 import * as React from "react";
+import { BackHandler } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
@@ -81,6 +82,21 @@ export default function App() {
 
     void syncNativePanelState(favorites, currentFavoriteId);
   }, [currentFavoriteId, favorites, hydrated]);
+
+  React.useEffect(() => {
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (screen.name !== "favorites") {
+        return false;
+      }
+
+      setScreen({ name: "search" });
+      return true;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [screen.name]);
 
   function handleAddFavorite(favorite: Favorite): AddFavoriteResult {
     const result = addFavorite(favorites, favorite);
