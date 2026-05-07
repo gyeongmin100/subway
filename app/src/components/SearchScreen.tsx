@@ -110,90 +110,93 @@ export function SearchScreen({
         ) : null}
       </View>
 
-      {!isSearching ? (
-        <View style={styles.favoriteStrip}>
-          <Text style={styles.sectionTitle}>현재 즐겨찾기</Text>
-          {favorites.length === 0 ? (
-            <Text style={styles.emptyText}>검색으로 즐겨찾기를 추가해보세요</Text>
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {favorites.map((favorite) => {
-                const favId = getFavoriteId(favorite);
-                const isSelected = favId === currentFavoriteId;
-                return (
+      <View style={styles.content}>
+        <Text style={styles.sectionTitle}>
+          {isSearching ? "검색 결과" : "현재 즐겨찾기"}
+        </Text>
+
+        {!isSearching ? (
+          <View style={styles.favoriteStrip}>
+            {favorites.length === 0 ? (
+              <Text style={styles.emptyText}>검색으로 즐겨찾기를 추가해보세요</Text>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {favorites.map((favorite) => {
+                  const favId = getFavoriteId(favorite);
+                  const isSelected = favId === currentFavoriteId;
+                  return (
+                    <Pressable
+                      key={favId}
+                      onPress={() => onSelectCurrentFavorite(favId)}
+                      style={[styles.favoriteChip, isSelected ? styles.favoriteChipSelected : null]}
+                    >
+                      <Text style={[styles.favoriteChipText, isSelected ? styles.favoriteChipTextSelected : null]}>
+                        {makeDisplayLabel(
+                          favorite.stationName,
+                          favorite.lineName,
+                          favorite.directionLabel,
+                        )}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
+          </View>
+        ) : (
+          <View style={styles.resultArea}>
+            {results.length === 0 ? (
+              <Text style={styles.helperText}>일치하는 역을 찾을 수 없습니다.</Text>
+            ) : (
+              <ScrollView contentContainerStyle={styles.resultList}>
+                {results.map((result) => (
                   <Pressable
-                    key={favId}
-                    onPress={() => onSelectCurrentFavorite(favId)}
-                    style={[styles.favoriteChip, isSelected ? styles.favoriteChipSelected : null]}
-                  >
-                    <Text style={[styles.favoriteChipText, isSelected ? styles.favoriteChipTextSelected : null]}>
-                      {makeDisplayLabel(
-                        favorite.stationName,
-                        favorite.lineName,
-                        favorite.directionLabel,
-                      )}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
-        </View>
-      ) : null}
+                    key={getFavoriteId(result)}
+                    onPress={() => {
+                      const candidate = favoriteFromSearchResult(result);
+                      const displayLabel = makeDisplayLabel(
+                        result.stationName,
+                        result.lineName,
+                        result.directionLabel,
+                      );
 
-      {isSearching ? (
-        <View style={styles.resultArea}>
-          {results.length === 0 ? (
-          <Text style={styles.helperText}>일치하는 역을 찾을 수 없습니다.</Text>
-          ) : (
-            <ScrollView contentContainerStyle={styles.resultList}>
-              {results.map((result) => (
-                <Pressable
-                  key={getFavoriteId(result)}
-                  onPress={() => {
-                    const candidate = favoriteFromSearchResult(result);
-                    const displayLabel = makeDisplayLabel(
-                      result.stationName,
-                      result.lineName,
-                      result.directionLabel,
-                    );
-
-                    Alert.alert(
-                      "즐겨찾기 추가",
-                      `${displayLabel}을 즐겨찾기에 추가할까요?`,
-                      [
-                        { text: "취소", style: "cancel" },
-                        {
-                          text: "추가",
-                          onPress: () => {
-                            const addResult = onAddFavorite(candidate);
-                            if (!addResult.ok) {
-                              Alert.alert(
-                                "추가 실패",
-                                getFavoriteErrorMessage(),
-                              );
-                            }
+                      Alert.alert(
+                        "즐겨찾기 추가",
+                        `${displayLabel}을 즐겨찾기에 추가할까요?`,
+                        [
+                          { text: "취소", style: "cancel" },
+                          {
+                            text: "추가",
+                            onPress: () => {
+                              const addResult = onAddFavorite(candidate);
+                              if (!addResult.ok) {
+                                Alert.alert(
+                                  "추가 실패",
+                                  getFavoriteErrorMessage(),
+                                );
+                              }
+                            },
                           },
-                        },
-                      ],
-                    );
-                  }}
-                  style={styles.resultCard}
-                >
-                  <View style={[styles.resultCardAccent, { backgroundColor: getLineColor(result.lineName) }]} />
-                  <View style={styles.resultCardContent}>
-                    <Text style={styles.stationName}>{result.stationName}</Text>
-                    <View style={styles.badgeRow}>
-                      <Chip label={result.lineName} />
-                      <Chip label={result.directionLabel} />
+                        ],
+                      );
+                    }}
+                    style={styles.resultCard}
+                  >
+                    <View style={[styles.resultCardAccent, { backgroundColor: getLineColor(result.lineName) }]} />
+                    <View style={styles.resultCardContent}>
+                      <Text style={styles.stationName}>{result.stationName}</Text>
+                      <View style={styles.badgeRow}>
+                        <Chip label={result.lineName} />
+                        <Chip label={result.directionLabel} />
+                      </View>
                     </View>
-                  </View>
-                </Pressable>
-              ))}
-            </ScrollView>
-          )}
-        </View>
-      ) : null}
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        )}
+      </View>
 
       <View style={styles.disclaimer}>
         <Text style={styles.disclaimerText}>도착 정보는 실제와 다를 수 있습니다.</Text>
@@ -260,9 +263,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#d0f0f0",
   },
-  favoriteStrip: {
+  content: {
+    flex: 1,
     marginTop: 22,
-    marginBottom: 16,
+    minHeight: 0,
+  },
+  favoriteStrip: {
+    minHeight: 48,
   },
   sectionTitle: {
     fontSize: 16,
@@ -300,9 +307,10 @@ const styles = StyleSheet.create({
   },
   resultArea: {
     flex: 1,
+    minHeight: 0,
   },
   resultList: {
-    paddingBottom: 8,
+    paddingBottom: 24,
     gap: 12,
   },
   resultCard: {
@@ -355,7 +363,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    marginTop: 8,
+    marginTop: 12,
     marginBottom: 8,
   },
   disclaimerText: {
