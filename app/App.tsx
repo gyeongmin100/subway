@@ -1,9 +1,7 @@
 import * as React from "react";
-import { BackHandler } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-import { FavoritesScreen } from "./src/components/FavoritesScreen";
 import { SearchScreen } from "./src/components/SearchScreen";
 import {
   addFavorite,
@@ -20,10 +18,7 @@ import {
 } from "./src/lib/storage";
 import type { Favorite } from "./src/types/favorite";
 
-type Screen = { name: "search" } | { name: "favorites" };
-
 export default function App() {
-  const [screen, setScreen] = React.useState<Screen>({ name: "search" });
   const [searchQuery, setSearchQuery] = React.useState("");
   const [favorites, setFavorites] = React.useState<Favorite[]>([]);
   const [currentFavoriteId, setCurrentFavoriteId] = React.useState<string | null>(null);
@@ -84,21 +79,6 @@ export default function App() {
     void syncNativePanelState(favorites, currentFavoriteId);
   }, [currentFavoriteId, favorites, hydrated]);
 
-  React.useEffect(() => {
-    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      if (screen.name !== "favorites") {
-        return false;
-      }
-
-      setScreen({ name: "search" });
-      return true;
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [screen.name]);
-
   function handleAddFavorite(favorite: Favorite): AddFavoriteResult {
     const result = addFavorite(favorites, favorite);
 
@@ -121,30 +101,18 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: "#f0fafa" }}>
         <StatusBar style="dark" />
-        {screen.name === "search" ? (
-          <SearchScreen
-            currentFavoriteId={currentFavoriteId}
-            favorites={favorites}
-            query={searchQuery}
-            onAddFavorite={handleAddFavorite}
-            onChangeQuery={setSearchQuery}
-            onOpenFavorites={() => setScreen({ name: "favorites" })}
-            onSelectCurrentFavorite={setCurrentFavoriteId}
-          />
-        ) : null}
-
-        {screen.name === "favorites" ? (
-          <FavoritesScreen
-            currentFavoriteId={currentFavoriteId}
-            favorites={favorites}
-            onBack={() => setScreen({ name: "search" })}
-            onDelete={handleDeleteFavorite}
-            onMove={(favoriteId, direction) => {
-              setFavorites((current) => moveFavorite(current, favoriteId, direction));
-            }}
-            onSelectCurrentFavorite={setCurrentFavoriteId}
-          />
-        ) : null}
+        <SearchScreen
+          currentFavoriteId={currentFavoriteId}
+          favorites={favorites}
+          query={searchQuery}
+          onAddFavorite={handleAddFavorite}
+          onChangeQuery={setSearchQuery}
+          onDelete={handleDeleteFavorite}
+          onMove={(favoriteId, direction) => {
+            setFavorites((current) => moveFavorite(current, favoriteId, direction));
+          }}
+          onSelectCurrentFavorite={setCurrentFavoriteId}
+        />
       </SafeAreaView>
     </SafeAreaProvider>
   );

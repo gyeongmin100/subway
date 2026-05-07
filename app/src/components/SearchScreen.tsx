@@ -27,7 +27,8 @@ type Props = {
   query: string;
   onAddFavorite: (favorite: Favorite) => AddFavoriteResult;
   onChangeQuery: (query: string) => void;
-  onOpenFavorites: () => void;
+  onDelete: (favoriteId: string) => void;
+  onMove: (favoriteId: string, direction: -1 | 1) => void;
   onSelectCurrentFavorite: (favoriteId: string) => void;
 };
 
@@ -47,6 +48,7 @@ const LINE_COLORS: Record<string, string> = {
   "공항철도": "#0090D2",
   "경춘선": "#0C8E72",
   "우이신설선": "#B0CE18",
+  "에버라인": "#B0CE18",
   "서해선": "#8FC31F",
   "GTX-A": "#9B3B8C",
 };
@@ -58,7 +60,7 @@ function getLineColor(lineName: string): string {
 function Chip({ label }: { label: string }) {
   return (
     <View style={styles.chip}>
-      <Text style={styles.chipText}>{label}</Text>
+      <Text numberOfLines={1} style={styles.chipText}>{label}</Text>
     </View>
   );
 }
@@ -67,13 +69,39 @@ function getFavoriteErrorMessage(): string {
   return "이미 추가된 즐겨찾기입니다.";
 }
 
+function StationCardBody({
+  directionLabel,
+  lineName,
+  stationName,
+}: {
+  directionLabel: string;
+  lineName: string;
+  stationName: string;
+}) {
+  return (
+    <>
+      <View style={[styles.resultCardAccent, { backgroundColor: getLineColor(lineName) }]} />
+      <View style={styles.resultCardContent}>
+        <Text numberOfLines={1} style={styles.stationName}>
+          {stationName}
+        </Text>
+        <View style={styles.badgeRow}>
+          <Chip label={lineName} />
+          <Chip label={directionLabel} />
+        </View>
+      </View>
+    </>
+  );
+}
+
 export function SearchScreen({
   currentFavoriteId,
   favorites,
   query,
   onAddFavorite,
   onChangeQuery,
-  onOpenFavorites,
+  onDelete,
+  onMove,
   onSelectCurrentFavorite,
 }: Props) {
   const isSearching = query.trim().length >= 2;
@@ -82,15 +110,7 @@ export function SearchScreen({
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>역 검색</Text>
-        </View>
-
-        <View style={styles.headerActions}>
-          <Pressable onPress={onOpenFavorites} style={styles.primaryButton}>
-            <Text style={styles.primaryLabel}>즐겨찾기</Text>
-          </Pressable>
-        </View>
+        <Text style={styles.title}>역 검색</Text>
       </View>
 
       <View style={styles.searchBox}>
@@ -116,28 +136,63 @@ export function SearchScreen({
         </Text>
 
         {!isSearching ? (
-          <View style={styles.favoriteStrip}>
+          <View style={styles.favoriteArea}>
             {favorites.length === 0 ? (
               <Text style={styles.emptyText}>검색으로 즐겨찾기를 추가해보세요</Text>
             ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {favorites.map((favorite) => {
-                  const favId = getFavoriteId(favorite);
-                  const isSelected = favId === currentFavoriteId;
+              <ScrollView contentContainerStyle={styles.favoriteList}>
+                {favorites.map((favorite, index) => {
+                  const favoriteId = getFavoriteId(favorite);
+                  const isSelected = favoriteId === currentFavoriteId;
+
                   return (
-                    <Pressable
-                      key={favId}
-                      onPress={() => onSelectCurrentFavorite(favId)}
-                      style={[styles.favoriteChip, isSelected ? styles.favoriteChipSelected : null]}
+                    <View
+                      key={favoriteId}
+                      style={[
+                        styles.favoriteCard,
+                        isSelected ? styles.favoriteCardSelected : null,
+                      ]}
                     >
-                      <Text style={[styles.favoriteChipText, isSelected ? styles.favoriteChipTextSelected : null]}>
-                        {makeDisplayLabel(
-                          favorite.stationName,
-                          favorite.lineName,
-                          favorite.directionLabel,
-                        )}
-                      </Text>
-                    </Pressable>
+                      <Pressable
+                        onPress={() => onSelectCurrentFavorite(favoriteId)}
+                        style={styles.favoriteCardBody}
+                      >
+                        <StationCardBody
+                          directionLabel={favorite.directionLabel}
+                          lineName={favorite.lineName}
+                          stationName={favorite.stationName}
+                        />
+                      </Pressable>
+
+                      <View style={styles.favoriteActions}>
+                        <View style={styles.moveButtons}>
+                          <Pressable
+                            disabled={index === 0}
+                            onPress={() => onMove(favoriteId, -1)}
+                            style={[
+                              styles.moveButton,
+                              index === 0 ? styles.disabledButton : null,
+                            ]}
+                          >
+                            <Ionicons name="chevron-up" size={16} color="#1a3a3a" />
+                          </Pressable>
+                          <Pressable
+                            disabled={index === favorites.length - 1}
+                            onPress={() => onMove(favoriteId, 1)}
+                            style={[
+                              styles.moveButton,
+                              index === favorites.length - 1 ? styles.disabledButton : null,
+                            ]}
+                          >
+                            <Ionicons name="chevron-down" size={16} color="#1a3a3a" />
+                          </Pressable>
+                        </View>
+
+                        <Pressable onPress={() => onDelete(favoriteId)} style={styles.deleteButton}>
+                          <Text style={styles.deleteLabel}>삭제</Text>
+                        </Pressable>
+                      </View>
+                    </View>
                   );
                 })}
               </ScrollView>
@@ -182,14 +237,11 @@ export function SearchScreen({
                     }}
                     style={styles.resultCard}
                   >
-                    <View style={[styles.resultCardAccent, { backgroundColor: getLineColor(result.lineName) }]} />
-                    <View style={styles.resultCardContent}>
-                      <Text style={styles.stationName}>{result.stationName}</Text>
-                      <View style={styles.badgeRow}>
-                        <Chip label={result.lineName} />
-                        <Chip label={result.directionLabel} />
-                      </View>
-                    </View>
+                    <StationCardBody
+                      directionLabel={result.directionLabel}
+                      lineName={result.lineName}
+                      stationName={result.stationName}
+                    />
                   </Pressable>
                 ))}
               </ScrollView>
@@ -214,29 +266,13 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
   },
   title: {
     marginTop: 6,
     fontSize: 32,
     fontWeight: "700",
     color: "#1a3a3a",
-  },
-  headerActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  primaryButton: {
-    borderRadius: 999,
-    backgroundColor: "#5bc8c8",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-  },
-  primaryLabel: {
-    color: "#fff",
-    fontWeight: "700",
   },
   searchBox: {
     marginTop: 18,
@@ -268,8 +304,9 @@ const styles = StyleSheet.create({
     marginTop: 22,
     minHeight: 0,
   },
-  favoriteStrip: {
-    minHeight: 48,
+  favoriteArea: {
+    flex: 1,
+    minHeight: 0,
   },
   sectionTitle: {
     fontSize: 16,
@@ -281,25 +318,68 @@ const styles = StyleSheet.create({
     color: "#5a8a8a",
     fontSize: 14,
   },
-  favoriteChip: {
-    marginRight: 8,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: "#d0f0f0",
-    borderWidth: 2,
-    borderColor: "transparent",
+  favoriteList: {
+    gap: 12,
+    paddingBottom: 24,
   },
-  favoriteChipSelected: {
+  favoriteCard: {
+    borderRadius: 28,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#b2e0e0",
+    flexDirection: "row",
+    overflow: "hidden",
+    elevation: 3,
+    shadowColor: "#5bc8c8",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+  },
+  favoriteCardSelected: {
     borderColor: "#2d7a7a",
-    backgroundColor: "#a8e8e8",
+    backgroundColor: "#e6f7f7",
   },
-  favoriteChipText: {
-    color: "#1a6b6b",
+  favoriteCardBody: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+  },
+  favoriteActions: {
+    width: 92,
+    flexShrink: 0,
+    borderLeftWidth: 1,
+    borderLeftColor: "#d0f0f0",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  moveButtons: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  moveButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#d0f0f0",
+  },
+  disabledButton: {
+    opacity: 0.4,
+  },
+  deleteButton: {
+    borderRadius: 999,
+    backgroundColor: "#fee2e2",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  deleteLabel: {
+    color: "#991b1b",
     fontWeight: "700",
-  },
-  favoriteChipTextSelected: {
-    color: "#1a3a3a",
+    fontSize: 13,
   },
   helperText: {
     color: "#5a8a8a",
@@ -333,6 +413,7 @@ const styles = StyleSheet.create({
   },
   resultCardContent: {
     flex: 1,
+    minWidth: 0,
     paddingHorizontal: 18,
     paddingVertical: 18,
   },
@@ -343,10 +424,12 @@ const styles = StyleSheet.create({
   },
   badgeRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
     marginTop: 12,
   },
   chip: {
+    maxWidth: "100%",
     borderRadius: 999,
     backgroundColor: "#2d7a7a",
     paddingHorizontal: 12,
