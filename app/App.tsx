@@ -1,5 +1,6 @@
 import * as React from "react";
 import { StatusBar } from "expo-status-bar";
+import { BackHandler } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import { SearchScreen } from "./src/components/SearchScreen";
@@ -23,6 +24,21 @@ export default function App() {
   const [favorites, setFavorites] = React.useState<Favorite[]>([]);
   const [currentFavoriteId, setCurrentFavoriteId] = React.useState<string | null>(null);
   const [hydrated, setHydrated] = React.useState(false);
+
+  React.useEffect(() => {
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (searchQuery.trim().length === 0) {
+        return false;
+      }
+
+      setSearchQuery("");
+      return true;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [searchQuery]);
 
   React.useEffect(() => {
     let active = true;

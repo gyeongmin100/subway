@@ -81,7 +81,7 @@ object SubwayPanelStore {
       .getString(ARRIVAL_SNAPSHOTS_KEY, null)
       ?: return emptyMap()
 
-    val root = JSONObject(raw)
+    val root = runCatching { JSONObject(raw) }.getOrNull() ?: return emptyMap()
     return buildMap {
       val keys = root.keys()
       while (keys.hasNext()) {
@@ -118,7 +118,7 @@ object SubwayPanelStore {
 
   fun getFavorites(context: Context): List<FavoriteItem> {
     val raw = getFavoritesJson(context) ?: return emptyList()
-    val array = JSONArray(raw)
+    val array = runCatching { JSONArray(raw) }.getOrNull() ?: return emptyList()
 
     return buildList {
       for (index in 0 until array.length()) {
